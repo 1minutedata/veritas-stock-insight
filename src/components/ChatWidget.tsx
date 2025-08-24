@@ -20,7 +20,7 @@ const ChatWidget = () => {
   const [userEmail, setUserEmail] = useState("");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hi! I can send emails via Gmail, post to Slack, or create QuickBooks entries. Try:\n- Email: \"Email to bob@example.com subject: Update body: Here's the latest analysis\"\n- Slack: \"Slack #general message: Big news!\"\n- QuickBooks: \"QuickBooks amount: 199.99 memo: Advisory fee for ACME\"\nStart by entering your email (used as user id for tools)." }
+    { role: "assistant", content: "Hi! I'm Jarvis, your AI assistant. I can help you with emails, Slack messages, and QuickBooks entries. Just give me natural language instructions and I'll execute the appropriate tools for you.\n\nStart by entering your email below (used as your user ID)." }
   ]);
   const [sending, setSending] = useState(false);
 
@@ -86,37 +86,53 @@ const ChatWidget = () => {
 
   const onSend = async () => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || !userEmail) return;
 
     append({ role: "user", content: trimmed });
     setInput("");
+    setSending(true);
 
-    const cmd = parseCommand(trimmed);
-
-    if (!cmd) {
-      append({
-        role: "assistant",
-        content:
-          "I couldn't parse that. Try one of these formats:\n" +
-          "- Email to jane@example.com subject: Hello body: Here is the update\n" +
-          "- Slack #general message: Heads up team...\n" +
-          "- QuickBooks amount: 250.00 memo: Research expense"
+    try {
+      const { data, error } = await supabase.functions.invoke('jarvis-agent', {
+        body: {
+          message: trimmed,
+          userId: userEmail
+        }
       });
-      return;
-    }
 
-    await executeParsedCommand(cmd);
+      if (error) {
+        throw error;
+      }
+
+      append({ role: "assistant", content: data.response });
+      toast({ title: "Success", description: "Task completed successfully" });
+    } catch (e: any) {
+      append({ role: "assistant", content: `I encountered an error: ${e?.message || 'Unknown error'}` });
+      toast({ title: "Error", description: e?.message || "Failed to process request", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50"
-        size="icon"
-      >
-        <Bot className="h-6 w-6" />
-      </Button>
+      <div className="fixed bottom-6 right-6 z-50">
+        {/* Speech bubble */}
+        <div className="mb-2 relative">
+          <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm font-mono shadow-lg">
+            Give me instructions
+          </div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-primary"></div>
+        </div>
+        
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+          size="icon"
+        >
+          <Bot className="h-6 w-6" />
+        </Button>
+      </div>
     );
   }
 
@@ -125,7 +141,7 @@ const ChatWidget = () => {
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Assistant</h3>
+          <h3 className="font-semibold font-mono">Jarvis</h3>
         </div>
         <div className="flex items-center gap-1">
           <Badge variant="secondary" className="gap-1 text-xs">
@@ -180,7 +196,7 @@ const ChatWidget = () => {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder='Try: "Email to jane@example.com subject: Hi body: Update"'
+              placeholder='Tell Jarvis what you need: "Send an email to...", "Post to Slack...", "Create QuickBooks entry..."'
               className="resize-none text-sm"
               rows={2}
             />
