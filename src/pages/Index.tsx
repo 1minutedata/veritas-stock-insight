@@ -7,8 +7,10 @@ import { StockSearch } from "@/components/StockSearch";
 import { StockCard } from "@/components/StockCard";
 import { NewsCard } from "@/components/NewsCard";
 import { AIAnalysis } from "@/components/AIAnalysis";
+import SubscriptionCard from "@/components/SubscriptionCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, Activity, Newspaper, TrendingUp, Zap, Settings } from "lucide-react";
+import { Brain, Activity, Newspaper, TrendingUp, Zap, Settings, LogIn, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
@@ -43,6 +45,7 @@ interface AnalysisData {
 
 const Index = () => {
   const { toast } = useToast();
+  const { user, signOut, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStock, setCurrentStock] = useState<StockData | null>(null);
   const [watchlist, setWatchlist] = useState<StockData[]>([]);
@@ -157,13 +160,35 @@ const Index = () => {
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-3">
           <Button asChild variant="outline">
             <Link to="/integrations">
               <Settings className="h-4 w-4 mr-2" />
               Manage Integrations
             </Link>
           </Button>
+          
+          {!loading && (
+            user ? (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" className="gap-2">
+                  <User className="h-4 w-4" />
+                  {user.email}
+                </Button>
+                <Button onClick={signOut} variant="outline" className="gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button asChild className="bg-gradient-primary hover:opacity-90">
+                <Link to="/auth">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In / Sign Up
+                </Link>
+              </Button>
+            )
+          )}
         </div>
 
         {/* Search Section */}
@@ -209,6 +234,9 @@ const Index = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Subscription Card */}
+            <SubscriptionCard />
+
             <Card className="p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">Watchlist</h2>
