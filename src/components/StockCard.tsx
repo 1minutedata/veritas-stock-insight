@@ -19,8 +19,14 @@ interface StockCardProps {
 }
 
 export function StockCard({ stock, onClick }: StockCardProps) {
-  const isPositive = stock.change > 0;
-  const isNegative = stock.change < 0;
+  // Add null checks and default values
+  const price = typeof stock.price === 'number' ? stock.price : 0;
+  const change = typeof stock.change === 'number' ? stock.change : 0;
+  const changePercent = typeof stock.changePercent === 'number' ? stock.changePercent : 0;
+  const volume = typeof stock.volume === 'number' ? stock.volume : 0;
+  
+  const isPositive = change > 0;
+  const isNegative = change < 0;
   
   const TrendIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus;
   const trendColor = isPositive ? "text-bullish" : isNegative ? "text-bearish" : "text-neutral";
@@ -41,28 +47,28 @@ export function StockCard({ stock, onClick }: StockCardProps) {
           <TrendIcon className={cn("h-4 w-4", trendColor)} />
         </div>
         <Badge variant={isPositive ? "default" : isNegative ? "destructive" : "secondary"}>
-          {isPositive ? "+" : ""}{stock.changePercent.toFixed(2)}%
+          {isPositive ? "+" : ""}{changePercent.toFixed(2)}%
         </Badge>
       </div>
       
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Price</span>
-          <span className="font-mono text-lg">${stock.price.toFixed(2)}</span>
+          <span className="font-mono text-lg">${price.toFixed(2)}</span>
         </div>
         
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Change</span>
           <span className={cn("font-mono", trendColor)}>
-            {isPositive ? "+" : ""}{stock.change.toFixed(2)}
+            {isPositive ? "+" : ""}{change.toFixed(2)}
           </span>
         </div>
         
-        {stock.volume && (
+        {volume > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Volume</span>
             <span className="font-mono text-sm">
-              {(stock.volume / 1000000).toFixed(1)}M
+              {(volume / 1000000).toFixed(1)}M
             </span>
           </div>
         )}
