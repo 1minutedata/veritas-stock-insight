@@ -23,9 +23,9 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 container mx-auto px-6 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-            Turn data into{" "}
+        <div className="max-w-4xl mx-auto bg-card/80 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-card space-y-8">
+          <h1 className="text-5xl md:text-7xl font-bold leading-tight text-foreground">
+            Turn data into {" "}
             <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               revolutionary
             </span>
@@ -33,7 +33,7 @@ export function HeroSection() {
             financial insights
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Connect to real-time market data with VeritasPilot's AI-powered analysis. 
             Make informed investment decisions backed by sentiment analysis and automated workflows.
           </p>
@@ -55,7 +55,7 @@ export function HeroSection() {
             </Button>
           </div>
           
-          <div className="flex items-center justify-center gap-8 pt-8 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-8 pt-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-bullish"></div>
               <span>Real-time Analysis</span>

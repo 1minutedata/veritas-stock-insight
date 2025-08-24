@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, TrendingUp, DollarSign, BarChart3, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Navigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Navigate, Link } from "react-router-dom";
 
 interface Stock {
   symbol: string;
@@ -96,8 +97,8 @@ const Dashboard = () => {
 
       if (error) throw error;
       
-      if (data) {
-        setSelectedStock(data);
+      if (data && data.stockData) {
+        setSelectedStock(data.stockData);
         
         // Load news
         const newsResponse = await supabase.functions.invoke('financial-data', {
@@ -156,13 +157,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-terminal">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 space-y-8">
-        <header className="text-center space-y-4">
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            VeritasPilot Terminal
-          </h1>
-          <p className="text-muted-foreground">AI-powered financial analysis and market insights</p>
+        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">VeritasPilot Terminal</h1>
+            <p className="text-muted-foreground">AI-powered financial analysis and market insights</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/integrations">
+              <Button className="px-5">Manage Integrations</Button>
+            </Link>
+          </div>
         </header>
 
         <SubscriptionCard />
@@ -282,8 +288,8 @@ const Dashboard = () => {
                     title: item.title,
                     summary: item.description || "",
                     publisher: item.source || "Unknown",
-                    publishTime: new Date(item.publishedAt).getTime() / 1000,
-                    link: item.url || "#",
+                    publishTime: (item as any).publishTime ?? (item.publishedAt ? Math.floor(new Date(item.publishedAt).getTime() / 1000) : Math.floor(Date.now() / 1000)),
+                    link: item.url || (item as any).link || "#",
                     uuid: `${index}-${item.title}`
                   }} 
                 />
