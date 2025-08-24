@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Settings, Zap, Brain, Mail } from "lucide-react";
 const Integrations = () => {
   const [connectedUser, setConnectedUser] = useState<string | null>(null);
-  return <div className="min-h-screen bg-gradient-terminal">
+  return <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="space-y-4">
@@ -23,11 +23,11 @@ const Integrations = () => {
 
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
-              <div className="p-3 bg-gradient-primary rounded-xl shadow-glow">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
                 <Settings className="h-8 w-8 text-white" />
               </div>
               <div className="text-left">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                   Integrations
                 </h1>
                 <p className="text-muted-foreground">Connect external services to enhance VeritasPilot</p>
@@ -35,15 +35,15 @@ const Integrations = () => {
             </div>
             
             <div className="flex justify-center gap-2">
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 border-purple-200">
                 <Zap className="h-3 w-3" />
-                Composio Platform
+                AI Platform
               </Badge>
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 border-blue-200">
                 <Brain className="h-3 w-3" />
                 AI-Powered Actions
               </Badge>
-              <Badge variant="secondary" className="gap-1">
+              <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 border-green-200">
                 <Mail className="h-3 w-3" />
                 Email Automation
               </Badge>
@@ -54,14 +54,16 @@ const Integrations = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Authentication Section */}
           <div className="space-y-6">
-            <Card className="p-6 shadow-card">
-              <h2 className="text-2xl font-semibold mb-4">Available Integrations</h2>
+            <Card className="p-6 bg-white border border-border/20 shadow-lg">
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">Available Integrations</h2>
               <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
+                <div className="p-4 border border-border/20 rounded-lg bg-gray-50/50">
                   <div className="flex items-center gap-3 mb-2">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">Gmail Integration</h3>
-                    <Badge variant={connectedUser ? "default" : "secondary"}>
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                      <Mail className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-foreground">Gmail Integration</h3>
+                    <Badge variant={connectedUser ? "default" : "secondary"} className={connectedUser ? "bg-green-100 text-green-700 border-green-200" : ""}>
                       {connectedUser ? "Connected" : "Available"}
                     </Badge>
                   </div>
