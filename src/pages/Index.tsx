@@ -7,6 +7,8 @@ import { StockSearch } from "@/components/StockSearch";
 import { StockCard } from "@/components/StockCard";
 import { NewsCard } from "@/components/NewsCard";
 import { AIAnalysis } from "@/components/AIAnalysis";
+import { ComposioAuth } from "@/components/ComposioAuth";
+import { ComposioActions } from "@/components/ComposioActions";
 import { supabase } from "@/integrations/supabase/client";
 import { Brain, Activity, Newspaper, TrendingUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,7 @@ const Index = () => {
   const [watchlist, setWatchlist] = useState<StockData[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [connectedUser, setConnectedUser] = useState<string | null>(null);
 
   const handleStockSearch = async (symbol: string) => {
     setIsLoading(true);
@@ -217,6 +220,16 @@ const Index = () => {
               </div>
             </Card>
 
+            <ComposioAuth onConnectionSuccess={setConnectedUser} />
+
+            {connectedUser && currentStock && (
+              <ComposioActions 
+                userEmail={connectedUser}
+                stockSymbol={currentStock.symbol}
+                analysis={analysis?.analysis}
+              />
+            )}
+
             <Card className="p-6 shadow-card">
               <h3 className="font-semibold mb-3">About VeritasPilot</h3>
               <div className="space-y-2 text-sm text-muted-foreground">
@@ -227,6 +240,7 @@ const Index = () => {
                   <li>• Valuation insights</li>
                   <li>• News aggregation</li>
                   <li>• Risk assessment</li>
+                  <li>• Email automation via Composio</li>
                 </ul>
               </div>
             </Card>
