@@ -27,7 +27,7 @@ serve(async (req) => {
       throw new Error('COMPOSIO_API_KEY not configured');
     }
 
-    const baseUrl = 'https://backend.composio.dev/api/v1';
+    const baseUrl = 'https://backend.composio.dev/api/v2';
 
     switch (action) {
       case 'initiate':
@@ -37,15 +37,15 @@ serve(async (req) => {
 
         console.log(`Initiating connection for user: ${userId} with auth config: ${authConfigId}`);
 
-        const initiateResponse = await fetch(`${baseUrl}/connected_accounts/initiate`, {
+        const initiateResponse = await fetch(`${baseUrl}/connectedAccounts/initiate`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${composioApiKey}`,
+            'X-API-Key': composioApiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            user_id: userId,
-            auth_config_id: authConfigId,
+            userId: userId,
+            authConfigId: authConfigId,
           }),
         });
 
@@ -67,10 +67,10 @@ serve(async (req) => {
           throw new Error('connectionRequestId is required for checking connection');
         }
 
-        const checkResponse = await fetch(`${baseUrl}/connected_accounts/wait_for_connection/${connectionRequestId}`, {
+        const checkResponse = await fetch(`${baseUrl}/connectedAccounts/${connectionRequestId}/status`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${composioApiKey}`,
+            'X-API-Key': composioApiKey,
           },
         });
 
@@ -88,16 +88,12 @@ serve(async (req) => {
           throw new Error('userId and tools are required');
         }
 
-        const toolsResponse = await fetch(`${baseUrl}/tools`, {
-          method: 'POST',
+        const toolsResponse = await fetch(`${baseUrl}/actions`, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${composioApiKey}`,
+            'X-API-Key': composioApiKey,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            user_id: userId,
-            tools: tools,
-          }),
         });
 
         if (!toolsResponse.ok) {
@@ -114,14 +110,14 @@ serve(async (req) => {
           throw new Error('userId and actionData are required');
         }
 
-        const executeResponse = await fetch(`${baseUrl}/tools/execute`, {
+        const executeResponse = await fetch(`${baseUrl}/actions/execute`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${composioApiKey}`,
+            'X-API-Key': composioApiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            user_id: userId,
+            userId: userId,
             ...actionData,
           }),
         });
