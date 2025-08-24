@@ -7,11 +7,10 @@ import { StockSearch } from "@/components/StockSearch";
 import { StockCard } from "@/components/StockCard";
 import { NewsCard } from "@/components/NewsCard";
 import { AIAnalysis } from "@/components/AIAnalysis";
-import { ComposioAuth } from "@/components/ComposioAuth";
-import { ComposioActions } from "@/components/ComposioActions";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, Activity, Newspaper, TrendingUp, Zap } from "lucide-react";
+import { Brain, Activity, Newspaper, TrendingUp, Zap, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface StockData {
   symbol: string;
@@ -49,7 +48,6 @@ const Index = () => {
   const [watchlist, setWatchlist] = useState<StockData[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
-  const [connectedUser, setConnectedUser] = useState<string | null>(null);
 
   const handleStockSearch = async (symbol: string) => {
     setIsLoading(true);
@@ -151,7 +149,21 @@ const Index = () => {
               <TrendingUp className="h-3 w-3" />
               Market Insights
             </Badge>
+            <Badge variant="secondary" className="gap-1">
+              <Settings className="h-3 w-3" />
+              Integrations
+            </Badge>
           </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex justify-center">
+          <Button asChild variant="outline">
+            <Link to="/integrations">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Integrations
+            </Link>
+          </Button>
         </div>
 
         {/* Search Section */}
@@ -220,16 +232,6 @@ const Index = () => {
               </div>
             </Card>
 
-            <ComposioAuth onConnectionSuccess={setConnectedUser} />
-
-            {connectedUser && currentStock && (
-              <ComposioActions 
-                userEmail={connectedUser}
-                stockSymbol={currentStock.symbol}
-                analysis={analysis?.analysis}
-              />
-            )}
-
             <Card className="p-6 shadow-card">
               <h3 className="font-semibold mb-3">About VeritasPilot</h3>
               <div className="space-y-2 text-sm text-muted-foreground">
@@ -240,7 +242,7 @@ const Index = () => {
                   <li>• Valuation insights</li>
                   <li>• News aggregation</li>
                   <li>• Risk assessment</li>
-                  <li>• Email automation via Composio</li>
+                  <li>• Third-party integrations</li>
                 </ul>
               </div>
             </Card>
