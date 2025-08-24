@@ -176,7 +176,7 @@ const Index = () => {
     );
   }
 
-  // Dashboard for authenticated users
+  // Full Dashboard for authenticated users
   return (
     <div className="min-h-screen bg-gradient-terminal">
       <div className="container mx-auto px-4 py-8 space-y-8">
@@ -231,7 +231,7 @@ const Index = () => {
           </Card>
         </div>
 
-        <StockSearch onSearch={handleStockSelect} />
+        <StockSearch onSearch={handleStockSelect} isLoading={loading} />
         
         {stocks.length > 0 && (
           <div className="space-y-4">
@@ -273,9 +273,43 @@ const Index = () => {
             <div className="space-y-4">
               <StockCard stock={selectedStock} />
               
-              {analysis && (
-                <AIAnalysis {...analysis} />
-              )}
+              <Card className="p-6 shadow-card">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">AI Analysis</h3>
+                  <button
+                    onClick={() => handleAnalyze(selectedStock.symbol)}
+                    disabled={analysisLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+                  >
+                    {analysisLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Analyze with AI"
+                    )}
+                  </button>
+                </div>
+                
+                {analysis && (
+                  <AIAnalysis {...analysis} />
+                )}
+              </Card>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">Latest News</h3>
+              {news.map((item, index) => (
+                <NewsCard 
+                  key={index} 
+                  news={{
+                    title: item.title,
+                    summary: item.description || "",
+                    publisher: item.source || "Unknown",
+                    publishTime: new Date(item.publishedAt).getTime() / 1000,
+                    link: item.url || "#",
+                    uuid: `${index}-${item.title}`
+                  }} 
+                />
+              ))}
             </div>
           </div>
         )}
