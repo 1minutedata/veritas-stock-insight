@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ComposioAuth } from "@/components/ComposioAuth";
-import { ComposioActions } from "@/components/ComposioActions";
+import { MultiIntegrationAuth } from "@/components/MultiIntegrationAuth";
+import { IntegrationActions } from "@/components/IntegrationActions";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Settings, Zap, Brain, Mail } from "lucide-react";
 const Integrations = () => {
-  const [connectedUser, setConnectedUser] = useState<string | null>(null);
+  const [connectedIntegrations, setConnectedIntegrations] = useState<Record<string, string>>({});
   return <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
@@ -51,79 +51,51 @@ const Integrations = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Authentication Section */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-white border border-border/20 shadow-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">Available Integrations</h2>
-              <div className="space-y-4">
-                <div className="p-4 border border-border/20 rounded-lg bg-gray-50/50">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                      <Mail className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-foreground">Gmail Integration</h3>
-                    <Badge variant={connectedUser ? "default" : "secondary"} className={connectedUser ? "bg-green-100 text-green-700 border-green-200" : ""}>
-                      {connectedUser ? "Connected" : "Available"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Send automated stock analysis reports and receive market alerts directly via email.
-                  </p>
-                  <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• Automated analysis reports</li>
-                    <li>• Market alert notifications</li>
-                    <li>• Portfolio summaries</li>
-                    <li>• Custom email templates</li>
-                  </ul>
+        <div className="space-y-6">
+          {/* Multi-Integration Authentication */}
+          <MultiIntegrationAuth 
+            onConnectionSuccess={(integrationId, userEmail) => {
+              setConnectedIntegrations(prev => ({
+                ...prev,
+                [integrationId]: userEmail
+              }));
+            }} 
+          />
+
+          {/* Integration Actions */}
+          <IntegrationActions 
+            connectedIntegrations={connectedIntegrations}
+            stockSymbol="AAPL" 
+            analysis="Sample analysis for demonstration purposes" 
+          />
+
+          {/* Integration Benefits */}
+          <Card className="p-6 bg-white shadow-lg">
+            <h3 className="font-semibold mb-3 text-gray-900">Integration Benefits</h3>
+            <div className="space-y-3 text-sm text-gray-600">
+              <div className="flex items-start gap-2">
+                <Zap className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">Automated Workflows</p>
+                  <p>Set up automated reports and notifications across all your connected platforms.</p>
                 </div>
               </div>
-            </Card>
-
-            <ComposioAuth onConnectionSuccess={setConnectedUser} />
-          </div>
-
-          {/* Actions Section */}
-          <div className="space-y-6">
-            {connectedUser ? <ComposioActions userEmail={connectedUser} stockSymbol="AAPL" analysis="Sample analysis for demonstration purposes" /> : <Card className="p-6 shadow-card">
-                <div className="text-center space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <h3 className="font-semibold mb-2">AI Actions Available</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Connect your Gmail account to unlock AI-powered email actions and automation features.
-                    </p>
-                  </div>
-                </div>
-              </Card>}
-
-            <Card className="p-6 shadow-card">
-              <h3 className="font-semibold mb-3">Integration Benefits</h3>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-start gap-2">
-                  <Zap className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-foreground">Automated Workflows</p>
-                    <p>Set up automated email reports and notifications based on market conditions.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Brain className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-foreground">AI-Generated Content</p>
-                    <p>Generate personalized analysis reports and market insights automatically.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-foreground">Email Automation</p>
-                    <p>Send analysis reports to clients, team members, or personal email addresses.</p>
-                  </div>
+              <div className="flex items-start gap-2">
+                <Brain className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">AI-Generated Content</p>
+                  <p>Generate personalized analysis reports and market insights automatically.</p>
                 </div>
               </div>
-            </Card>
-          </div>
+              <div className="flex items-start gap-2">
+                <Mail className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">Multi-Platform Communication</p>
+                  <p>Send analysis via email, Slack, and sync with QuickBooks for comprehensive coverage.</p>
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Footer Info */}
