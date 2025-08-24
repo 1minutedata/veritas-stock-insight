@@ -128,7 +128,7 @@ const Integrations = () => {
         <Card className="p-6 shadow-card">
           <div className="text-center">
             <h3 className="font-semibold mb-2">Powered by VeritasPilot</h3>
-            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">V</p>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">VeritasPilot leverages LangChain technology to accelerate your agents' financial capabilities from sending invoices simply through text via Stripe, chatting with the agent to send Gmail notifications regarding data & sentiment analysis, or even Slack Notifications. </p>
           </div>
         </Card>
       </div>
