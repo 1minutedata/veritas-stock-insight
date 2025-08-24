@@ -159,16 +159,20 @@ const ChatWidget = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {messages.map((m, idx) => (
-            <div key={idx} className="flex gap-2">
-              {m.role === "user" ? (
-                <User2 className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
-              ) : (
-                <Bot className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-              )}
-              <pre className="whitespace-pre-wrap text-xs flex-1">{m.content}</pre>
-            </div>
-          ))}
+          {messages.map((m, idx) => {
+            const isUser = m.role === "user";
+            return (
+              <div key={idx} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs shadow-card border ${
+                  isUser
+                    ? 'bg-primary text-primary-foreground rounded-tr-sm'
+                    : 'bg-secondary text-secondary-foreground rounded-tl-sm font-mono'
+                }`}>
+                  {m.content}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="p-3 border-t">

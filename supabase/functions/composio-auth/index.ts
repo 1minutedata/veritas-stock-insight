@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
+import { Composio } from "npm:@composio/core";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -65,8 +65,44 @@ async function attemptFetchJson(url: string, init: RequestInit): Promise<Attempt
   }
 }
 
+// Create Composio SDK client (falls back to REST if SDK is unavailable)
+function createComposioClient(apiKey: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Composio({ apiKey } as any);
+  } catch (_e) {
+    return null;
+  }
+}
+
 async function initiateConnection(composioApiKey: string, userId: string, authConfigId: string) {
-  // Try v2 camelCase, v2 snake_case, then v1 snake_case
+  const results: AttemptResult[] = [];
+
+  // Try SDK first for maximum compatibility
+  try {
+    const client = createComposioClient(composioApiKey);
+    if (client) {
+      const conn = await (client as any).connectedAccounts.initiate(userId, authConfigId);
+      return {
+        success: true,
+        result: {
+          ok: true,
+          url: 'sdk://connectedAccounts.initiate',
+          method: 'SDK',
+          status: 200,
+          statusText: 'OK',
+          data: conn,
+        },
+        attempts: [
+          { ok: true, url: 'sdk://connectedAccounts.initiate', method: 'SDK', status: 200, statusText: 'OK' },
+        ],
+      };
+    }
+  } catch (e: any) {
+    results.push({ ok: false, url: 'sdk://connectedAccounts.initiate', method: 'SDK', error: e?.message || String(e) });
+  }
+
+  // Fallback to REST endpoints (multiple variants)
   const attempts = [
     {
       url: `${baseUrlV2}/connectedAccounts/initiate`,
@@ -88,7 +124,6 @@ async function initiateConnection(composioApiKey: string, userId: string, authCo
     },
   ];
 
-  const results: AttemptResult[] = [];
   for (const a of attempts) {
     const res = await attemptFetchJson(a.url, { method: a.method, headers: a.headers, body: a.body });
     results.push(res);
@@ -98,7 +133,33 @@ async function initiateConnection(composioApiKey: string, userId: string, authCo
 }
 
 async function checkConnection(composioApiKey: string, connectionRequestId: string) {
-  // Try v2 camelCase status, v2 snake_case status, v1 wait_for_connection
+  const results: AttemptResult[] = [];
+
+  // Try SDK first: wait for connection to be ready or return current status
+  try {
+    const client = createComposioClient(composioApiKey);
+    if (client) {
+      const conn = await (client as any).connectedAccounts.waitForConnection(connectionRequestId);
+      return {
+        success: true,
+        result: {
+          ok: true,
+          url: 'sdk://connectedAccounts.waitForConnection',
+          method: 'SDK',
+          status: 200,
+          statusText: 'OK',
+          data: conn,
+        },
+        attempts: [
+          { ok: true, url: 'sdk://connectedAccounts.waitForConnection', method: 'SDK', status: 200, statusText: 'OK' },
+        ],
+      };
+    }
+  } catch (e: any) {
+    results.push({ ok: false, url: 'sdk://connectedAccounts.waitForConnection', method: 'SDK', error: e?.message || String(e) });
+  }
+
+  // Fallback to REST
   const attempts = [
     {
       url: `${baseUrlV2}/connectedAccounts/${connectionRequestId}/status`,
@@ -117,7 +178,6 @@ async function checkConnection(composioApiKey: string, connectionRequestId: stri
     },
   ];
 
-  const results: AttemptResult[] = [];
   for (const a of attempts) {
     const res = await attemptFetchJson(a.url, { method: a.method, headers: a.headers });
     results.push(res);
@@ -207,7 +267,7 @@ serve(async (req) => {
     if (!composioApiKey) {
       console.error('[composio-auth] Missing COMPOSIO_API_KEY in environment');
       return new Response(JSON.stringify({ error: 'COMPOSIO_API_KEY not configured' }), {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
