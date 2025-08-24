@@ -99,7 +99,26 @@ async function initiateConnection(composioApiKey: string, userId: string, authCo
       };
     }
   } catch (e: any) {
-    results.push({ ok: false, url: 'sdk://connectedAccounts.initiate', method: 'SDK', error: e?.message || String(e) });
+    const msg = e?.message || String(e);
+    // If user already has connected accounts for this auth config, treat as connected
+    if (msg?.toLowerCase().includes('multiple connected accounts') || msg?.toLowerCase().includes('already connected')) {
+      const data = { status: 'connected', message: 'Already connected', existing: true };
+      return {
+        success: true,
+        result: {
+          ok: true,
+          url: 'sdk://connectedAccounts.initiate',
+          method: 'SDK',
+          status: 200,
+          statusText: 'OK',
+          data,
+        },
+        attempts: [
+          { ok: true, url: 'sdk://connectedAccounts.initiate', method: 'SDK', status: 200, statusText: 'OK' },
+        ],
+      };
+    }
+    results.push({ ok: false, url: 'sdk://connectedAccounts.initiate', method: 'SDK', error: msg });
   }
 
   // Fallback to REST endpoints (multiple variants)

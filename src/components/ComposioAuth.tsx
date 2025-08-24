@@ -55,13 +55,23 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
         throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
       }
 
-      setRedirectUrl((data as any).redirect_url || (data as any).redirectUrl || null);
-      setConnectionRequestId((data as any).id || (data as any).connectionId || null);
-      
-      toast({
-        title: "Connection Initiated",
-        description: "Click the link below to authenticate with Gmail",
-      });
+      const status = (data as any)?.status;
+      if (status === 'connected') {
+        setConnectionStatus('connected');
+        toast({
+          title: "Already connected",
+          description: "Gmail is already connected",
+        });
+        onConnectionSuccess?.(userEmail);
+      } else {
+        setRedirectUrl((data as any).redirect_url || (data as any).redirectUrl || null);
+        setConnectionRequestId((data as any).id || (data as any).connectionId || null);
+        
+        toast({
+          title: "Connection Initiated",
+          description: "Click the link below to authenticate with Gmail",
+        });
+      }
 
     } catch (e: any) {
       console.error('[ComposioAuth] Error initiating connection:', e);

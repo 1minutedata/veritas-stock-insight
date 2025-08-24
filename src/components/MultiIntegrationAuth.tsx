@@ -114,19 +114,31 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
         throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
       }
 
-      setConnectionStates(prev => ({
-        ...prev,
-        [integration.id]: {
-          status: 'connecting',
-          redirectUrl: (data as any).redirect_url || (data as any).redirectUrl,
-          connectionRequestId: (data as any).id || (data as any).connectionId
-        }
-      }));
-      
-      toast({
-        title: "Connection Initiated",
-        description: `Click the link to authenticate with ${integration.name}`,
-      });
+      if ((data as any)?.status === 'connected') {
+        setConnectionStates(prev => ({
+          ...prev,
+          [integration.id]: { status: 'connected', lastError: undefined }
+        }));
+        toast({
+          title: "Already connected",
+          description: `${integration.name} is already connected`,
+        });
+        onConnectionSuccess?.(integration.id, userEmail);
+      } else {
+        setConnectionStates(prev => ({
+          ...prev,
+          [integration.id]: {
+            status: 'connecting',
+            redirectUrl: (data as any).redirect_url || (data as any).redirectUrl,
+            connectionRequestId: (data as any).id || (data as any).connectionId
+          }
+        }));
+        
+        toast({
+          title: "Connection Initiated",
+          description: `Click the link to authenticate with ${integration.name}`,
+        });
+      }
 
     } catch (e: any) {
       console.error('[MultiIntegrationAuth] Error initiating connection', { integration: integration.id, error: e });
