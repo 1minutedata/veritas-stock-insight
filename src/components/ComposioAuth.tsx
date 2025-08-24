@@ -17,6 +17,7 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
   const [userEmail, setUserEmail] = useState("");
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected'>('idle');
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [connectionRequestId, setConnectionRequestId] = useState<string | null>(null);
 
   const handleInitiateConnection = async () => {
     if (!userEmail) {
@@ -43,6 +44,7 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
       if (error) throw error;
 
       setRedirectUrl(data.redirect_url);
+      setConnectionRequestId(data.id);
       
       toast({
         title: "Connection Initiated",
@@ -62,13 +64,35 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
     }
   };
 
+  const checkConnectionStatus = async () => {
+    if (!connectionRequestId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('composio-auth', {
+        body: {
+          action: 'checkConnection',
+          connectionRequestId: connectionRequestId,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.status === 'connected') {
+        setConnectionStatus('connected');
+        toast({
+          title: "Success",
+          description: "Gmail connection established successfully!",
+        });
+        onConnectionSuccess?.(userEmail);
+      }
+    } catch (error: any) {
+      console.error('Error checking connection:', error);
+    }
+  };
+
   const handleConnectionComplete = () => {
-    setConnectionStatus('connected');
-    toast({
-      title: "Success",
-      description: "Gmail connection established successfully!",
-    });
-    onConnectionSuccess?.(userEmail);
+    // Check connection status
+    checkConnectionStatus();
   };
 
   return (

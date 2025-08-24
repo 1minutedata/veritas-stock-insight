@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,11 +6,12 @@ const corsHeaders = {
 };
 
 interface ComposioAuthRequest {
-  action: 'initiate' | 'getTools' | 'executeAction';
+  action: 'initiate' | 'getTools' | 'executeAction' | 'checkConnection';
   userId?: string;
   authConfigId?: string;
   tools?: string[];
   actionData?: any;
+  connectionRequestId?: string;
 }
 
 serve(async (req) => {
@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, userId, authConfigId, tools, actionData }: ComposioAuthRequest = await req.json();
+    const { action, userId, authConfigId, tools, actionData, connectionRequestId }: ComposioAuthRequest = await req.json();
     const composioApiKey = Deno.env.get('COMPOSIO_API_KEY');
 
     if (!composioApiKey) {
@@ -50,11 +50,36 @@ serve(async (req) => {
         });
 
         if (!initiateResponse.ok) {
-          throw new Error(`Failed to initiate connection: ${initiateResponse.statusText}`);
+          const errorText = await initiateResponse.text();
+          console.error(`Failed to initiate connection: ${initiateResponse.status} ${initiateResponse.statusText}`, errorText);
+          throw new Error(`Failed to initiate connection: ${initiateResponse.status} ${initiateResponse.statusText}`);
         }
 
         const initiateData = await initiateResponse.json();
+        console.log('Connection initiation successful:', initiateData);
+        
         return new Response(JSON.stringify(initiateData), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      case 'checkConnection':
+        if (!connectionRequestId) {
+          throw new Error('connectionRequestId is required for checking connection');
+        }
+
+        const checkResponse = await fetch(`${baseUrl}/connected_accounts/wait_for_connection/${connectionRequestId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${composioApiKey}`,
+          },
+        });
+
+        if (!checkResponse.ok) {
+          throw new Error(`Failed to check connection: ${checkResponse.statusText}`);
+        }
+
+        const checkData = await checkResponse.json();
+        return new Response(JSON.stringify(checkData), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
@@ -64,11 +89,15 @@ serve(async (req) => {
         }
 
         const toolsResponse = await fetch(`${baseUrl}/tools`, {
-          method: 'GET',
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${composioApiKey}`,
-            'X-User-ID': userId,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            user_id: userId,
+            tools: tools,
+          }),
         });
 
         if (!toolsResponse.ok) {
@@ -76,11 +105,7 @@ serve(async (req) => {
         }
 
         const toolsData = await toolsResponse.json();
-        const filteredTools = toolsData.filter((tool: any) => 
-          tools.includes(tool.name)
-        );
-
-        return new Response(JSON.stringify({ tools: filteredTools }), {
+        return new Response(JSON.stringify(toolsData), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
@@ -89,14 +114,16 @@ serve(async (req) => {
           throw new Error('userId and actionData are required');
         }
 
-        const executeResponse = await fetch(`${baseUrl}/actions/execute`, {
+        const executeResponse = await fetch(`${baseUrl}/tools/execute`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${composioApiKey}`,
             'Content-Type': 'application/json',
-            'X-User-ID': userId,
           },
-          body: JSON.stringify(actionData),
+          body: JSON.stringify({
+            user_id: userId,
+            ...actionData,
+          }),
         });
 
         if (!executeResponse.ok) {
