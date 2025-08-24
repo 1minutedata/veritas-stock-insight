@@ -77,6 +77,8 @@ export default {
 				'gradient-bullish': 'var(--gradient-bullish)',
 				'gradient-bearish': 'var(--gradient-bearish)',
 				'gradient-terminal': 'var(--gradient-terminal)',
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-feature': 'var(--gradient-feature)',
 			},
 			boxShadow: {
 				'glow': 'var(--shadow-glow)',

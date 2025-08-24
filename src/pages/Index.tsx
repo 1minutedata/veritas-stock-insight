@@ -1,281 +1,284 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { LandingNavbar } from "@/components/LandingNavbar";
+import { HeroSection } from "@/components/HeroSection";
+import { FeaturesSection } from "@/components/FeaturesSection";
+import { PricingSection } from "@/components/PricingSection";
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
 import { StockSearch } from "@/components/StockSearch";
 import { StockCard } from "@/components/StockCard";
 import { NewsCard } from "@/components/NewsCard";
 import { AIAnalysis } from "@/components/AIAnalysis";
 import SubscriptionCard from "@/components/SubscriptionCard";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, Activity, Newspaper, TrendingUp, Zap, Settings, LogIn, LogOut, User } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, TrendingUp, DollarSign, BarChart3, Zap } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
-interface StockData {
+interface Stock {
   symbol: string;
   price: number;
   change: number;
   changePercent: number;
   volume: number;
-  dayHigh?: number;
-  dayLow?: number;
-  marketCap?: number;
-  previousClose?: number;
 }
 
 interface NewsItem {
   title: string;
-  summary: string;
-  publisher: string;
-  publishTime: number;
-  link: string;
-  uuid: string;
+  description: string;
+  url: string;
+  publishedAt: string;
+  source: string;
+  sentiment?: 'bullish' | 'bearish' | 'neutral';
 }
 
-interface AnalysisData {
+interface Analysis {
   analysis: string;
   sentiment: 'bullish' | 'bearish' | 'neutral';
   valuation: 'overvalued' | 'undervalued' | 'fairly valued';
-  stockData: StockData;
+  symbol: string;
   timestamp: number;
 }
 
 const Index = () => {
-  const { toast } = useToast();
-  const { user, signOut, loading } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStock, setCurrentStock] = useState<StockData | null>(null);
-  const [watchlist, setWatchlist] = useState<StockData[]>([]);
+  const { user } = useAuth();
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [stocks, setStocks] = useState<Stock[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const { toast } = useToast();
 
-  const handleStockSearch = async (symbol: string) => {
-    setIsLoading(true);
-    try {
-      // Get stock data
-      const { data: stockResponse, error: stockError } = await supabase.functions.invoke('financial-data', {
-        body: { action: 'getStockData', symbol }
-      });
-
-      if (stockError) throw stockError;
-
-      const stockData = stockResponse.stockData;
-      setCurrentStock(stockData);
-
-      // Get news
-      const { data: newsResponse, error: newsError } = await supabase.functions.invoke('financial-data', {
-        body: { action: 'getStockNews', symbol }
-      });
-
-      if (newsError) throw newsError;
-      setNews(newsResponse.news);
-
-      // Get AI analysis
-      const { data: analysisResponse, error: analysisError } = await supabase.functions.invoke('financial-data', {
-        body: { action: 'analyzeStock', symbol }
-      });
-
-      if (analysisError) throw analysisError;
-      setAnalysis(analysisResponse);
-
-      // Add to watchlist if not already there
-      if (!watchlist.find(stock => stock.symbol === symbol)) {
-        setWatchlist(prev => [stockData, ...prev.slice(0, 9)]);
-      }
-
-      toast({
-        title: "Analysis Complete",
-        description: `Successfully analyzed ${symbol} with VeritasPilot AI`,
-      });
-
-    } catch (error) {
-      console.error('Error fetching stock data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch stock data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  // Load default stocks on component mount
+  useEffect(() => {
+    if (user) {
+      loadMultipleStocks();
     }
-  };
+  }, [user]);
 
-  const loadWatchlist = async () => {
-    const defaultSymbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA'];
+  const loadMultipleStocks = async () => {
+    setRefreshing(true);
     try {
-      const { data: response, error } = await supabase.functions.invoke('financial-data', {
-        body: { action: 'getMultipleStocks', symbols: defaultSymbols }
+      const { data, error } = await supabase.functions.invoke('financial-data', {
+        body: {
+          action: 'getMultipleStocks',
+          symbols: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
+        }
       });
 
       if (error) throw error;
-      setWatchlist(response.stocks);
+      
+      if (data?.stocks) {
+        setStocks(data.stocks);
+      }
     } catch (error) {
-      console.error('Error loading watchlist:', error);
+      console.error('Error loading stocks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load stock data",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
     }
   };
 
-  // Load default watchlist on component mount
-  useEffect(() => {
-    loadWatchlist();
-  }, []);
+  const handleStockSelect = async (symbol: string) => {
+    setLoading(true);
+    setNews([]);
+    setAnalysis(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('financial-data', {
+        body: { action: 'getStockData', symbol }
+      });
 
+      if (error) throw error;
+      
+      if (data) {
+        setSelectedStock(data);
+        
+        // Load news
+        const newsResponse = await supabase.functions.invoke('financial-data', {
+          body: { action: 'getStockNews', symbol }
+        });
+        
+        if (newsResponse.data?.news) {
+          setNews(newsResponse.data.news);
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load stock data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyze = async (symbol: string) => {
+    setAnalysisLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('financial-data', {
+        body: { action: 'analyzeStock', symbol }
+      });
+
+      if (error) throw error;
+      
+      if (data) {
+        setAnalysis({
+          analysis: data.analysis,
+          sentiment: data.sentiment,
+          valuation: data.valuation,
+          symbol,
+          timestamp: Date.now()
+        });
+        
+        toast({
+          title: "Analysis Complete",
+          description: "AI analysis has been generated successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing stock:', error);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to generate AI analysis. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  // Landing page for non-authenticated users
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-hero relative overflow-hidden">
+        <LandingNavbar />
+        <HeroSection />
+        <FeaturesSection />
+        <PricingSection />
+        
+        {/* Footer */}
+        <footer className="py-12 border-t border-border/50 bg-card/20 backdrop-blur-sm">
+          <div className="container mx-auto px-6 text-center">
+            <p className="text-muted-foreground">
+              © 2024 VeritasPilot. All rights reserved.
+            </p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  // Dashboard for authenticated users
   return (
     <div className="min-h-screen bg-gradient-terminal">
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 bg-gradient-primary rounded-xl shadow-glow">
-              <Brain className="h-8 w-8 text-white" />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <header className="text-center space-y-4">
+          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            VeritasPilot Terminal
+          </h1>
+          <p className="text-muted-foreground">AI-powered financial analysis and market insights</p>
+        </header>
+
+        <SubscriptionCard />
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="p-4 border border-border bg-card/50">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-bullish" />
+              <div>
+                <p className="text-sm text-muted-foreground">Market Status</p>
+                <p className="text-lg font-semibold text-bullish">Active</p>
+              </div>
             </div>
-            <div className="text-left">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                VeritasPilot
-              </h1>
-              <p className="text-muted-foreground">AI-Powered Stock Analysis Co-pilot</p>
+          </Card>
+          
+          <Card className="p-4 border border-border bg-card/50">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Portfolio Value</p>
+                <p className="text-lg font-semibold">$124,532</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 border border-border bg-card/50">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-bullish" />
+              <div>
+                <p className="text-sm text-muted-foreground">Today's Gain</p>
+                <p className="text-lg font-semibold text-bullish">+$2,341</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-4 border border-border bg-card/50">
+            <div className="flex items-center gap-3">
+              <Zap className="h-5 w-5 text-accent" />
+              <div>
+                <p className="text-sm text-muted-foreground">Active Alerts</p>
+                <p className="text-lg font-semibold">7</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <StockSearch onSearch={handleStockSelect} />
+        
+        {stocks.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Market Overview</h2>
+              <button
+                onClick={loadMultipleStocks}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-50"
+              >
+                {refreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <TrendingUp className="h-4 w-4" />
+                )}
+                Refresh
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stocks.map((stock) => (
+                <StockCard 
+                  key={stock.symbol} 
+                  stock={stock}
+                  onClick={() => handleStockSelect(stock.symbol)}
+                />
+              ))}
             </div>
           </div>
-          
-          <div className="flex justify-center gap-2">
-            <Badge variant="secondary" className="gap-1">
-              <Zap className="h-3 w-3" />
-              Real-time Data
-            </Badge>
-            <Badge variant="secondary" className="gap-1">
-              <Brain className="h-3 w-3" />
-              AI Analysis
-            </Badge>
-            <Badge variant="secondary" className="gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Market Insights
-            </Badge>
-            <Badge variant="secondary" className="gap-1">
-              <Settings className="h-3 w-3" />
-              Integrations
-            </Badge>
+        )}
+
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        </div>
+        )}
 
-        {/* Navigation */}
-        <div className="flex justify-center gap-3">
-          <Button asChild variant="outline">
-            <Link to="/integrations">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Integrations
-            </Link>
-          </Button>
-          
-          {!loading && (
-            user ? (
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" className="gap-2">
-                  <User className="h-4 w-4" />
-                  {user.email}
-                </Button>
-                <Button onClick={signOut} variant="outline" className="gap-2">
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <Button asChild className="bg-gradient-primary hover:opacity-90">
-                <Link to="/auth">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Sign In / Sign Up
-                </Link>
-              </Button>
-            )
-          )}
-        </div>
-
-        {/* Search Section */}
-        <Card className="p-6 shadow-card">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Stock Analysis</h2>
+        {selectedStock && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <StockCard stock={selectedStock} />
+              
+              {analysis && (
+                <AIAnalysis {...analysis} />
+              )}
+            </div>
           </div>
-          <StockSearch onSearch={handleStockSearch} isLoading={isLoading} />
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Analysis */}
-          <div className="lg:col-span-2 space-y-6">
-            {currentStock && (
-              <StockCard stock={currentStock} />
-            )}
-
-            {analysis && (
-              <AIAnalysis
-                analysis={analysis.analysis}
-                sentiment={analysis.sentiment}
-                valuation={analysis.valuation}
-                symbol={analysis.stockData.symbol}
-                timestamp={analysis.timestamp}
-              />
-            )}
-
-            {news.length > 0 && (
-              <Card className="p-6 shadow-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <Newspaper className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-semibold">Latest News</h2>
-                </div>
-                <div className="space-y-4">
-                  {news.map((item) => (
-                    <NewsCard key={item.uuid} news={item} />
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Subscription Card */}
-            <SubscriptionCard />
-
-            <Card className="p-6 shadow-card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Watchlist</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadWatchlist}
-                  disabled={isLoading}
-                >
-                  Refresh
-                </Button>
-              </div>
-              <div className="space-y-3">
-                {watchlist.map((stock) => (
-                  <StockCard
-                    key={stock.symbol}
-                    stock={stock}
-                    onClick={() => handleStockSearch(stock.symbol)}
-                  />
-                ))}
-              </div>
-            </Card>
-
-            <Card className="p-6 shadow-card">
-              <h3 className="font-semibold mb-3">About VeritasPilot</h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>Advanced AI-powered stock analysis platform providing:</p>
-                <ul className="space-y-1 ml-4">
-                  <li>• Real-time market data</li>
-                  <li>• AI sentiment analysis</li>
-                  <li>• Valuation insights</li>
-                  <li>• News aggregation</li>
-                  <li>• Risk assessment</li>
-                  <li>• Third-party integrations</li>
-                </ul>
-              </div>
-            </Card>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
