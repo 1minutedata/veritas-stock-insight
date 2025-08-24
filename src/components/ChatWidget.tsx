@@ -6,117 +6,112 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, Bot, User2, Mail, MessageSquare, FileText, X, Minimize2 } from "lucide-react";
-import { parseCommand, ParsedCommand } from "@/utils/commandParsers";
+import { Send, Bot, Mail, MessageSquare, FileText, X } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant" | "system";
   content: string;
 };
 
-const ChatWidget = () => {
+interface ChatWidgetProps {
+  connectedIntegrations?: string[];
+}
+
+const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }: ChatWidgetProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hi! I can send emails via Gmail, post to Slack, or create QuickBooks entries. Try:\n- Email: \"Email to bob@example.com subject: Update body: Here's the latest analysis\"\n- Slack: \"Slack #general message: Big news!\"\n- QuickBooks: \"QuickBooks amount: 199.99 memo: Advisory fee for ACME\"\nStart by entering your email (used as user id for tools)." }
+    { role: "assistant", content: "Hi! I'm Jarvis, your AI assistant. I can help you with emails, Slack messages, and QuickBooks entries. Just give me natural language instructions and I'll execute the appropriate tools for you.\n\nStart by entering your email below (used as your user ID)." }
   ]);
   const [sending, setSending] = useState(false);
 
   const append = (msg: Message) => setMessages(prev => [...prev, msg]);
 
-  const executeParsedCommand = async (cmd: ParsedCommand) => {
+  const onSend = async () => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
     if (!userEmail) {
-      toast({ title: "Missing email", description: "Enter your email above first.", variant: "destructive" });
+      toast({ 
+        title: "Missing email", 
+        description: "Enter your email above first.", 
+        variant: "destructive" 
+      });
       return;
     }
+
+    append({ role: "user", content: trimmed });
+    setInput("");
     setSending(true);
 
     try {
-      let actionData: any = null;
-      let integrationLabel = "";
-
-      if (cmd?.kind === "gmail") {
-        actionData = {
-          action: "GMAIL_SEND_EMAIL",
-          parameters: { to_email: cmd.to, subject: cmd.subject, body: cmd.body }
-        };
-        integrationLabel = "Gmail";
-      } else if (cmd?.kind === "slack") {
-        actionData = {
-          action: "SLACK_SEND_MESSAGE",
-          parameters: { channel: cmd.channel, text: cmd.text }
-        };
-        integrationLabel = "Slack";
-      } else if (cmd?.kind === "quickbooks") {
-        actionData = {
-          action: "QUICKBOOKS_CREATE_ITEM",
-          parameters: { name: "Investment", description: cmd.memo, unit_price: cmd.amount }
-        };
-        integrationLabel = "QuickBooks";
-      }
-
-      if (!actionData) {
-        throw new Error("Unsupported command format");
-      }
-
-      const { data, error } = await supabase.functions.invoke('composio-auth', {
+      // Call the Jarvis agent
+      const { data, error } = await supabase.functions.invoke('jarvis-agent', {
         body: {
-          action: 'executeAction',
           userId: userEmail,
-          actionData
+          message: trimmed,
+          connectedIntegrations
         }
       });
 
       if (error) {
-        const details = (data as any)?.attempts || (data as any)?.error || error.message;
-        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+        throw new Error(error.message);
       }
 
-      append({ role: "assistant", content: `${integrationLabel} action succeeded.` });
-      toast({ title: "Success", description: `${integrationLabel} action executed.` });
+      if (data?.success) {
+        append({ 
+          role: "assistant", 
+          content: data.message || "Task completed successfully!" 
+        });
+        
+        if (data.toolsExecuted > 0) {
+          toast({ 
+            title: "Success", 
+            description: `Executed ${data.toolsExecuted} tool(s) successfully.` 
+          });
+        }
+      } else {
+        throw new Error(data?.error || "Unknown error");
+      }
     } catch (e: any) {
-      append({ role: "assistant", content: `Action failed: ${e?.message?.slice(0, 300) || 'Unknown error'}` });
-      toast({ title: "Error", description: e?.message?.slice(0, 300) || "Failed to execute", variant: "destructive" });
+      console.error('[ChatWidget] Error:', e);
+      append({ 
+        role: "assistant", 
+        content: `I encountered an error: ${e?.message?.slice(0, 300) || 'Unknown error'}` 
+      });
+      toast({ 
+        title: "Error", 
+        description: e?.message?.slice(0, 300) || "Failed to process request", 
+        variant: "destructive" 
+      });
     } finally {
       setSending(false);
     }
   };
 
-  const onSend = async () => {
-    const trimmed = input.trim();
-    if (!trimmed) return;
-
-    append({ role: "user", content: trimmed });
-    setInput("");
-
-    const cmd = parseCommand(trimmed);
-
-    if (!cmd) {
-      append({
-        role: "assistant",
-        content:
-          "I couldn't parse that. Try one of these formats:\n" +
-          "- Email to jane@example.com subject: Hello body: Here is the update\n" +
-          "- Slack #general message: Heads up team...\n" +
-          "- QuickBooks amount: 250.00 memo: Research expense"
-      });
-      return;
-    }
-
-    await executeParsedCommand(cmd);
-  };
-
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50"
-        size="icon"
-      >
-        <Bot className="h-6 w-6" />
-      </Button>
+      <div className="fixed bottom-6 right-6 z-50">
+        {/* Speech bubble */}
+        <div className="mb-2 mr-2 relative">
+          <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg max-w-[200px] text-sm text-gray-700">
+            Give me instructions
+            {/* Arrow pointing down-right */}
+            <div className="absolute bottom-0 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white transform translate-y-full"></div>
+            <div className="absolute bottom-0 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-200 transform translate-y-full translate-y-[1px]"></div>
+          </div>
+        </div>
+        
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+          size="icon"
+        >
+          <Bot className="h-6 w-6" />
+        </Button>
+      </div>
     );
   }
 
@@ -125,18 +120,24 @@ const ChatWidget = () => {
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Assistant</h3>
+          <h3 className="font-semibold font-mono">Jarvis</h3>
         </div>
         <div className="flex items-center gap-1">
-          <Badge variant="secondary" className="gap-1 text-xs">
-            <Mail className="h-3 w-3" /> Gmail
-          </Badge>
-          <Badge variant="secondary" className="gap-1 text-xs">
-            <MessageSquare className="h-3 w-3" /> Slack
-          </Badge>
-          <Badge variant="secondary" className="gap-1 text-xs">
-            <FileText className="h-3 w-3" /> QB
-          </Badge>
+          {connectedIntegrations.includes('gmail') && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Mail className="h-3 w-3" /> Gmail
+            </Badge>
+          )}
+          {connectedIntegrations.includes('slack') && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <MessageSquare className="h-3 w-3" /> Slack
+            </Badge>
+          )}
+          {connectedIntegrations.includes('quickbooks') && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <FileText className="h-3 w-3" /> QB
+            </Badge>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -173,6 +174,17 @@ const ChatWidget = () => {
               </div>
             );
           })}
+          {sending && (
+            <div className="flex justify-start">
+              <div className="bg-secondary text-secondary-foreground rounded-2xl px-3 py-2 text-xs border rounded-tl-sm">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-3 border-t">
@@ -180,9 +192,15 @@ const ChatWidget = () => {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder='Try: "Email to jane@example.com subject: Hi body: Update"'
+              placeholder='Tell Jarvis what you need: "Send an email to...", "Post to Slack...", "Create QuickBooks entry..."'
               className="resize-none text-sm"
               rows={2}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onSend();
+                }
+              }}
             />
             <Button 
               onClick={onSend} 
