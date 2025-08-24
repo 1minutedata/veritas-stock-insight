@@ -36,7 +36,7 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
         body: {
           action: 'initiate',
           userId: userEmail,
-          authConfigId: 'ac_0fdrMPqhEqKe', // Gmail auth config
+          authConfigId: 'ac_kmqPF3GWRcEN', // Your Gmail auth config
         }
       });
 

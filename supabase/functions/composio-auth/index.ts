@@ -35,6 +35,8 @@ serve(async (req) => {
           throw new Error('userId and authConfigId are required for initiation');
         }
 
+        console.log(`Initiating connection for user: ${userId} with auth config: ${authConfigId}`);
+
         const initiateResponse = await fetch(`${baseUrl}/connected_accounts/initiate`, {
           method: 'POST',
           headers: {
