@@ -233,40 +233,55 @@ async function getToolsOrActions(composioApiKey: string, userId: string, tools?:
 }
 
 async function executeAction(composioApiKey: string, userId: string, actionData: any) {
-  // Filter and execute using Composio SDK first, then fall back to REST
+  console.log(`[composio-auth] Executing action for user: ${userId}`, { action: actionData?.action, parameters: actionData?.parameters });
+  
   const results: AttemptResult[] = [];
   const client = createComposioClient(composioApiKey);
 
-  // 1) Fetch and filter tools (only Gmail, Slack, QuickBooks) to avoid overwhelming the LLM and ensure valid actions
-  if (client && (client as any).tools?.get) {
+  if (!actionData?.action) {
+    console.error('[composio-auth] No action specified in actionData');
+    return {
+      success: false,
+      attempts: results,
+      filterError: {
+        message: 'No action specified',
+        available: [],
+      },
+    } as any;
+  }
+
+  // 1) Try direct SDK execution using tools.execute method
+  if (client && (client as any).tools?.execute) {
     try {
-      const allowedToolkits = ['GMAIL', 'SLACK', 'QUICKBOOKS'];
-      const sdkTools = await (client as any).tools.get(userId, { toolkits: allowedToolkits, limit: 20 });
-      const availableSlugs: string[] = (sdkTools || [])
-        .map((t: any) => t?.slug || t?.name || t?.id)
-        .filter(Boolean);
-
-      if (actionData?.action && !availableSlugs.includes(actionData.action)) {
-        // Return early with clear guidance
-        return {
-          success: false,
-          attempts: results,
-          filterError: {
-            message: `Requested action ${actionData.action} is not available for the connected toolkits`,
-            available: availableSlugs,
-          },
-        } as any;
-      }
-
+      console.log(`[composio-auth] Attempting SDK tools.execute for action: ${actionData.action}`);
+      const data = await (client as any).tools.execute(actionData.action, userId, actionData.parameters || {});
+      console.log('[composio-auth] SDK tools.execute successful:', data);
+      return {
+        success: true,
+        result: {
+          ok: true,
+          url: 'sdk://tools.execute',
+          method: 'SDK',
+          status: 200,
+          statusText: 'OK',
+          data,
+        },
+        attempts: [
+          { ok: true, url: 'sdk://tools.execute', method: 'SDK', status: 200, statusText: 'OK' },
+        ],
+      };
     } catch (e: any) {
-      results.push({ ok: false, url: 'sdk://tools.get', method: 'SDK', error: e?.message || String(e) });
+      console.error('[composio-auth] SDK tools.execute failed:', e?.message || e);
+      results.push({ ok: false, url: 'sdk://tools.execute', method: 'SDK', error: e?.message || String(e) });
     }
   }
 
-  // 2) Try SDK execution path first
+  // 2) Try SDK actions.execute method as fallback
   if (client && (client as any).actions?.execute) {
     try {
-      const data = await (client as any).actions.execute(userId, actionData?.action, actionData?.parameters);
+      console.log(`[composio-auth] Attempting SDK actions.execute for action: ${actionData.action}`);
+      const data = await (client as any).actions.execute(userId, actionData.action, actionData.parameters || {});
+      console.log('[composio-auth] SDK actions.execute successful:', data);
       return {
         success: true,
         result: {
@@ -283,24 +298,23 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
         ],
       };
     } catch (e: any) {
+      console.error('[composio-auth] SDK actions.execute failed:', e?.message || e);
       results.push({ ok: false, url: 'sdk://actions.execute', method: 'SDK', error: e?.message || String(e) });
     }
   }
 
-  // 3) Fall back to REST endpoints
-  // v2 POST /actions/execute expects { userId, action, parameters }
-  // v1 POST /tools/execute expects { user_id, tool, arguments }
+  // 3) Fall back to REST endpoints with proper error handling
   const attempts = [
     {
       url: `${baseUrlV2}/actions/execute`,
       method: 'POST',
-      body: JSON.stringify({ userId, ...actionData }),
+      body: JSON.stringify({ userId, action: actionData.action, parameters: actionData.parameters || {} }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
     {
       url: `${altBaseUrlV2}/actions/execute`,
       method: 'POST',
-      body: JSON.stringify({ userId, ...actionData }),
+      body: JSON.stringify({ userId, action: actionData.action, parameters: actionData.parameters || {} }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
     {
@@ -308,28 +322,26 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
       method: 'POST',
       body: JSON.stringify({
         user_id: userId,
-        tool: actionData?.action,
-        arguments: actionData?.parameters,
-      }),
-      headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
-    },
-    {
-      url: `${altBaseUrlV1}/tools/execute`,
-      method: 'POST',
-      body: JSON.stringify({
-        user_id: userId,
-        tool: actionData?.action,
-        arguments: actionData?.parameters,
+        tool: actionData.action,
+        arguments: actionData.parameters || {},
       }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
   ];
 
   for (const a of attempts) {
+    console.log(`[composio-auth] Trying REST endpoint: ${a.url}`);
     const res = await attemptFetchJson(a.url, { method: a.method, headers: a.headers, body: a.body });
     results.push(res);
-    if (res.ok) return { success: true, result: res, attempts: results };
+    if (res.ok) {
+      console.log('[composio-auth] REST execution successful:', res.data);
+      return { success: true, result: res, attempts: results };
+    } else {
+      console.error(`[composio-auth] REST endpoint failed: ${a.url}`, res);
+    }
   }
+
+  console.error('[composio-auth] All execution attempts failed:', results);
   return { success: false, attempts: results };
 }
 
