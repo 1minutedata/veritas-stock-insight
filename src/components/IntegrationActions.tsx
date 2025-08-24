@@ -73,26 +73,34 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
 
     setIsLoading(prev => ({ ...prev, [integrationType]: true }));
 
+    const payload = {
+      action: 'executeAction',
+      userId: userEmail,
+      actionData: {
+        action: actionType,
+        parameters: parameters
+      }
+    };
+
+    console.log('[IntegrationActions] Executing action', { integrationType, payload });
+
     try {
       const { data, error } = await supabase.functions.invoke('composio-auth', {
-        body: {
-          action: 'executeAction',
-          userId: userEmail,
-          actionData: {
-            action: actionType,
-            parameters: parameters
-          }
-        }
+        body: payload
       });
 
-      if (error) throw error;
+      console.log('[IntegrationActions] Execute response', { integrationType, data, error });
+
+      if (error) {
+        const details = (data as any)?.attempts || (data as any)?.error || error.message;
+        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+      }
 
       toast({
         title: "Action Executed Successfully",
         description: `Action completed via ${integrationType}`,
       });
 
-      // Clear form data
       setActionData(prev => ({
         ...prev,
         [integrationType]: integrationType === 'gmail' 
@@ -102,11 +110,11 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
           : { memo: '', amount: '' }
       }));
 
-    } catch (error: any) {
-      console.error('Error executing action:', error);
+    } catch (e: any) {
+      console.error('[IntegrationActions] Error executing action', { integrationType, error: e });
       toast({
         title: "Error",
-        description: `Failed to execute action via ${integrationType}`,
+        description: `Failed to execute action via ${integrationType}: ${e?.message?.slice(0, 300) || ''}`,
         variant: "destructive",
       });
     } finally {

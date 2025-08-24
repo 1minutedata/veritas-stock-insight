@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,31 +33,42 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
     setIsLoading(true);
     setConnectionStatus('connecting');
 
+    console.log('[ComposioAuth] Initiating connection with payload:', {
+      action: 'initiate',
+      userId: userEmail,
+      authConfigId: 'ac_kmqPF3GWRcEN',
+    });
+
     try {
       const { data, error } = await supabase.functions.invoke('composio-auth', {
         body: {
           action: 'initiate',
           userId: userEmail,
-          authConfigId: 'ac_kmqPF3GWRcEN', // Your Gmail auth config
+          authConfigId: 'ac_kmqPF3GWRcEN', // Gmail auth config
         }
       });
 
-      if (error) throw error;
+      console.log('[ComposioAuth] Initiate response:', { data, error });
 
-      setRedirectUrl(data.redirect_url);
-      setConnectionRequestId(data.id);
+      if (error) {
+        const details = (data as any)?.attempts || (data as any)?.error || error.message;
+        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+      }
+
+      setRedirectUrl((data as any).redirect_url || (data as any).redirectUrl || null);
+      setConnectionRequestId((data as any).id || (data as any).connectionId || null);
       
       toast({
         title: "Connection Initiated",
         description: "Click the link below to authenticate with Gmail",
       });
 
-    } catch (error: any) {
-      console.error('Error initiating connection:', error);
+    } catch (e: any) {
+      console.error('[ComposioAuth] Error initiating connection:', e);
       setConnectionStatus('idle');
       toast({
-        title: "Error",
-        description: "Failed to initiate connection. Please try again.",
+        title: "Failed to initiate connection",
+        description: e?.message?.slice(0, 300) || "Please check logs for details.",
         variant: "destructive",
       });
     } finally {
@@ -67,6 +79,7 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
   const checkConnectionStatus = async () => {
     if (!connectionRequestId) return;
 
+    console.log('[ComposioAuth] Checking connection status for:', connectionRequestId);
     try {
       const { data, error } = await supabase.functions.invoke('composio-auth', {
         body: {
@@ -75,23 +88,37 @@ export const ComposioAuth = ({ onConnectionSuccess }: ComposioAuthProps) => {
         }
       });
 
-      if (error) throw error;
+      console.log('[ComposioAuth] Check status response:', { data, error });
 
-      if (data.status === 'connected') {
+      if (error) {
+        const details = (data as any)?.attempts || (data as any)?.error || error.message;
+        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+      }
+
+      if ((data as any).status === 'connected') {
         setConnectionStatus('connected');
         toast({
           title: "Success",
           description: "Gmail connection established successfully!",
         });
         onConnectionSuccess?.(userEmail);
+      } else {
+        toast({
+          title: "Still connecting",
+          description: `Status: ${(data as any).status || 'unknown'}`,
+        });
       }
-    } catch (error: any) {
-      console.error('Error checking connection:', error);
+    } catch (err: any) {
+      console.error('[ComposioAuth] Error checking connection:', err);
+      toast({
+        title: "Error",
+        description: err?.message?.slice(0, 300) || "Failed to check connection.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleConnectionComplete = () => {
-    // Check connection status
     checkConnectionStatus();
   };
 

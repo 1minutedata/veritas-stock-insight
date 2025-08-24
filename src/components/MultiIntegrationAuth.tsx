@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
     status: 'idle' | 'connecting' | 'connected';
     redirectUrl?: string;
     connectionRequestId?: string;
+    lastError?: string;
   }>>({});
 
   const handleInitiateConnection = async (integration: Integration) => {
@@ -89,26 +91,35 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
     setLoadingIntegration(integration.id);
     setConnectionStates(prev => ({
       ...prev,
-      [integration.id]: { ...prev[integration.id], status: 'connecting' }
+      [integration.id]: { ...prev[integration.id], status: 'connecting', lastError: undefined }
     }));
+
+    const payload = {
+      action: 'initiate',
+      userId: userEmail,
+      authConfigId: integration.authConfigId,
+    };
+
+    console.log('[MultiIntegrationAuth] Initiating connection', { integration: integration.id, payload });
 
     try {
       const { data, error } = await supabase.functions.invoke('composio-auth', {
-        body: {
-          action: 'initiate',
-          userId: userEmail,
-          authConfigId: integration.authConfigId,
-        }
+        body: payload
       });
 
-      if (error) throw error;
+      console.log('[MultiIntegrationAuth] Initiate response', { integration: integration.id, data, error });
+
+      if (error) {
+        const details = (data as any)?.attempts || (data as any)?.error || error.message;
+        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+      }
 
       setConnectionStates(prev => ({
         ...prev,
         [integration.id]: {
           status: 'connecting',
-          redirectUrl: data.redirect_url,
-          connectionRequestId: data.id
+          redirectUrl: (data as any).redirect_url || (data as any).redirectUrl,
+          connectionRequestId: (data as any).id || (data as any).connectionId
         }
       }));
       
@@ -117,15 +128,15 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
         description: `Click the link to authenticate with ${integration.name}`,
       });
 
-    } catch (error: any) {
-      console.error('Error initiating connection:', error);
+    } catch (e: any) {
+      console.error('[MultiIntegrationAuth] Error initiating connection', { integration: integration.id, error: e });
       setConnectionStates(prev => ({
         ...prev,
-        [integration.id]: { status: 'idle' }
+        [integration.id]: { status: 'idle', lastError: e?.message?.slice(0, 300) }
       }));
       toast({
         title: "Error",
-        description: `Failed to initiate ${integration.name} connection. Please try again.`,
+        description: `Failed to initiate ${integration.name} connection. ${e?.message?.slice(0, 200) || ''}`,
         variant: "destructive",
       });
     } finally {
@@ -137,6 +148,8 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
     const state = connectionStates[integration.id];
     if (!state?.connectionRequestId) return;
 
+    console.log('[MultiIntegrationAuth] Checking connection status', { integration: integration.id, connectionRequestId: state.connectionRequestId });
+
     try {
       const { data, error } = await supabase.functions.invoke('composio-auth', {
         body: {
@@ -145,21 +158,40 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
         }
       });
 
-      if (error) throw error;
+      console.log('[MultiIntegrationAuth] Check status response', { integration: integration.id, data, error });
 
-      if (data.status === 'connected') {
+      if (error) {
+        const details = (data as any)?.attempts || (data as any)?.error || error.message;
+        throw new Error(typeof details === 'string' ? details : JSON.stringify(details));
+      }
+
+      if ((data as any).status === 'connected') {
         setConnectionStates(prev => ({
           ...prev,
-          [integration.id]: { ...prev[integration.id], status: 'connected' }
+          [integration.id]: { ...prev[integration.id], status: 'connected', lastError: undefined }
         }));
         toast({
           title: "Success",
           description: `${integration.name} connection established successfully!`,
         });
         onConnectionSuccess?.(integration.id, userEmail);
+      } else {
+        toast({
+          title: "Still connecting",
+          description: `Status: ${(data as any).status || 'unknown'}`,
+        });
       }
-    } catch (error: any) {
-      console.error('Error checking connection:', error);
+    } catch (e: any) {
+      console.error('[MultiIntegrationAuth] Error checking connection', { integration: integration.id, error: e });
+      setConnectionStates(prev => ({
+        ...prev,
+        [integration.id]: { ...prev[integration.id], lastError: e?.message?.slice(0, 300) }
+      }));
+      toast({
+        title: "Error",
+        description: e?.message?.slice(0, 300) || "Failed to check connection.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -219,13 +251,20 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
                 </ul>
 
                 {state.status === 'idle' && (
-                  <Button 
-                    onClick={() => handleInitiateConnection(integration)}
-                    disabled={loadingIntegration === integration.id || !userEmail}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    {loadingIntegration === integration.id ? "Initiating..." : `Connect ${integration.name}`}
-                  </Button>
+                  <>
+                    {state.lastError && (
+                      <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                        {state.lastError}
+                      </div>
+                    )}
+                    <Button 
+                      onClick={() => handleInitiateConnection(integration)}
+                      disabled={loadingIntegration === integration.id || !userEmail}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      {loadingIntegration === integration.id ? "Initiating..." : `Connect ${integration.name}`}
+                    </Button>
+                  </>
                 )}
 
                 {state.redirectUrl && state.status === 'connecting' && (
