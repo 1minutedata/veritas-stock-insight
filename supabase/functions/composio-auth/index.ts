@@ -30,6 +30,8 @@ const MAX_SNIPPET_LEN = 400;
 
 const baseUrlV2 = 'https://backend.composio.dev/api/v2';
 const baseUrlV1 = 'https://backend.composio.dev/api/v1';
+const altBaseUrlV2 = 'https://api.composio.dev/api/v2';
+const altBaseUrlV1 = 'https://api.composio.dev/api/v1';
 
 function safeSnippet(text: string | undefined | null, maxLen = MAX_SNIPPET_LEN) {
   if (!text) return '';
@@ -231,11 +233,72 @@ async function getToolsOrActions(composioApiKey: string, userId: string, tools?:
 }
 
 async function executeAction(composioApiKey: string, userId: string, actionData: any) {
+  // Filter and execute using Composio SDK first, then fall back to REST
+  const results: AttemptResult[] = [];
+  const client = createComposioClient(composioApiKey);
+
+  // 1) Fetch and filter tools (only Gmail, Slack, QuickBooks) to avoid overwhelming the LLM and ensure valid actions
+  if (client && (client as any).tools?.get) {
+    try {
+      const allowedToolkits = ['GMAIL', 'SLACK', 'QUICKBOOKS'];
+      const sdkTools = await (client as any).tools.get(userId, { toolkits: allowedToolkits, limit: 20 });
+      const availableSlugs: string[] = (sdkTools || [])
+        .map((t: any) => t?.slug || t?.name || t?.id)
+        .filter(Boolean);
+
+      if (actionData?.action && !availableSlugs.includes(actionData.action)) {
+        // Return early with clear guidance
+        return {
+          success: false,
+          attempts: results,
+          filterError: {
+            message: `Requested action ${actionData.action} is not available for the connected toolkits`,
+            available: availableSlugs,
+          },
+        } as any;
+      }
+
+    } catch (e: any) {
+      results.push({ ok: false, url: 'sdk://tools.get', method: 'SDK', error: e?.message || String(e) });
+    }
+  }
+
+  // 2) Try SDK execution path first
+  if (client && (client as any).actions?.execute) {
+    try {
+      const data = await (client as any).actions.execute(userId, actionData?.action, actionData?.parameters);
+      return {
+        success: true,
+        result: {
+          ok: true,
+          url: 'sdk://actions.execute',
+          method: 'SDK',
+          status: 200,
+          statusText: 'OK',
+          data,
+        },
+        attempts: [
+          ...results,
+          { ok: true, url: 'sdk://actions.execute', method: 'SDK', status: 200, statusText: 'OK' },
+        ],
+      };
+    } catch (e: any) {
+      results.push({ ok: false, url: 'sdk://actions.execute', method: 'SDK', error: e?.message || String(e) });
+    }
+  }
+
+  // 3) Fall back to REST endpoints
   // v2 POST /actions/execute expects { userId, action, parameters }
   // v1 POST /tools/execute expects { user_id, tool, arguments }
   const attempts = [
     {
       url: `${baseUrlV2}/actions/execute`,
+      method: 'POST',
+      body: JSON.stringify({ userId, ...actionData }),
+      headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
+    },
+    {
+      url: `${altBaseUrlV2}/actions/execute`,
       method: 'POST',
       body: JSON.stringify({ userId, ...actionData }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
@@ -250,9 +313,18 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
       }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
+    {
+      url: `${altBaseUrlV1}/tools/execute`,
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        tool: actionData?.action,
+        arguments: actionData?.parameters,
+      }),
+      headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
+    },
   ];
 
-  const results: AttemptResult[] = [];
   for (const a of attempts) {
     const res = await attemptFetchJson(a.url, { method: a.method, headers: a.headers, body: a.body });
     results.push(res);
@@ -381,6 +453,16 @@ serve(async (req) => {
         console.log('[composio-auth] Executing action:', { userId, actionData });
         const result = await executeAction(composioApiKey, userId, actionData);
         if (!result.success) {
+          // If we failed due to filter mismatch, surface a 400 with available tools
+          // deno-lint-ignore no-explicit-any
+          const r: any = result as any;
+          if (r?.filterError) {
+            return new Response(
+              JSON.stringify({ error: 'Requested action not available', ...r.filterError }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
           console.error('[composio-auth] Execute action failed. Attempt details:', result.attempts);
           return new Response(JSON.stringify({
             error: 'Failed to execute action',
