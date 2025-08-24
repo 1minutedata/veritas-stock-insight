@@ -6,12 +6,9 @@ import { ComposioAuth } from "@/components/ComposioAuth";
 import { ComposioActions } from "@/components/ComposioActions";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Settings, Zap, Brain, Mail } from "lucide-react";
-
 const Integrations = () => {
   const [connectedUser, setConnectedUser] = useState<string | null>(null);
-
-  return (
-    <div className="min-h-screen bg-gradient-terminal">
+  return <div className="min-h-screen bg-gradient-terminal">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="space-y-4">
@@ -86,14 +83,7 @@ const Integrations = () => {
 
           {/* Actions Section */}
           <div className="space-y-6">
-            {connectedUser ? (
-              <ComposioActions 
-                userEmail={connectedUser}
-                stockSymbol="AAPL"
-                analysis="Sample analysis for demonstration purposes"
-              />
-            ) : (
-              <Card className="p-6 shadow-card">
+            {connectedUser ? <ComposioActions userEmail={connectedUser} stockSymbol="AAPL" analysis="Sample analysis for demonstration purposes" /> : <Card className="p-6 shadow-card">
                 <div className="text-center space-y-4">
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -103,8 +93,7 @@ const Integrations = () => {
                     </p>
                   </div>
                 </div>
-              </Card>
-            )}
+              </Card>}
 
             <Card className="p-6 shadow-card">
               <h3 className="font-semibold mb-3">Integration Benefits</h3>
@@ -138,16 +127,11 @@ const Integrations = () => {
         {/* Footer Info */}
         <Card className="p-6 shadow-card">
           <div className="text-center">
-            <h3 className="font-semibold mb-2">Powered by Composio</h3>
-            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-              VeritasPilot uses Composio's platform to provide secure, authenticated integrations with external services. 
-              Your authentication tokens are encrypted and stored securely, and you maintain full control over your connected accounts.
-            </p>
+            <h3 className="font-semibold mb-2">Powered by VeritasPilot</h3>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">V</p>
           </div>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Integrations;
