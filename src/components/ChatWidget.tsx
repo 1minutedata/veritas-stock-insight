@@ -122,13 +122,31 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-xl z-50 flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
+    <Card className="fixed bottom-6 right-6 w-96 h-[500px] max-h-[80vh] shadow-xl z-50 flex flex-col resize overflow-hidden">
+      <div className="flex items-center justify-between p-2 border-b cursor-move">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold font-mono">Jarvis</h3>
+          <Bot className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold font-mono text-sm">Jarvis</h3>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => {
+              const card = document.querySelector('.fixed.bottom-6.right-6');
+              if (card) {
+                card.classList.toggle('w-96');
+                card.classList.toggle('w-[600px]');
+                card.classList.toggle('h-[500px]');
+                card.classList.toggle('h-[700px]');
+              }
+            }}
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </Button>
           {connectedIntegrations.includes('gmail') && (
             <Badge variant="secondary" className="gap-1 text-xs">
               <Mail className="h-3 w-3" /> Gmail
@@ -165,7 +183,7 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 max-h-[400px]">
           {messages.map((m, idx) => {
             const isUser = m.role === "user";
             return (
