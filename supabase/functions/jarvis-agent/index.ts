@@ -90,55 +90,76 @@ serve(async (req) => {
       }
     }
 
-    // Create OpenAI tools format - handle both SDK and REST formats
+    // Create OpenAI tools format - handle both SDK and REST formats (support SDK OpenAI-shaped tools)
     const openaiTools = availableTools
       .map((tool: any) => {
-        console.log(`[jarvis-agent] Processing tool:`, tool);
-        
-        const nameCandidate =
-          tool?.name ||
-          tool?.slug ||
-          tool?.action ||
-          tool?.id ||
-          tool?.tool ||
-          '';
-        const toolName = String(nameCandidate || '').trim();
-        
-        // More lenient tool name validation - just ensure it exists and doesn't have special chars
-        if (!toolName || toolName.length === 0) {
-          console.log(`[jarvis-agent] Skipping empty tool name`);
+        try {
+          console.log(`[jarvis-agent] Processing tool:`, tool);
+
+          // Case 1: Tool already in OpenAI format from Composio SDK
+          if (tool?.type === 'function' && tool?.function?.name) {
+            const fn = tool.function;
+            const parameters = fn.parameters || { type: 'object', properties: {}, required: [] };
+            const formattedTool = {
+              type: 'function',
+              function: {
+                name: String(fn.name), // keep original action name to ensure executability
+                description: fn.description || `Execute ${fn.name}`,
+                parameters,
+              },
+            };
+            console.log(`[jarvis-agent] Using SDK-provided tool:`, formattedTool);
+            return formattedTool;
+          }
+
+          // Case 2: Tool from REST or other shapes → normalize
+          const nameCandidate =
+            tool?.name ||
+            tool?.slug ||
+            tool?.action ||
+            tool?.id ||
+            tool?.tool ||
+            '';
+          const toolName = String(nameCandidate || '').trim();
+
+          if (!toolName) {
+            console.log(`[jarvis-agent] Skipping empty tool name`);
+            return null;
+          }
+
+          // Clean tool name for OpenAI compatibility
+          const cleanToolName = toolName.replace(/[^a-zA-Z0-9_]/g, '_').toUpperCase();
+
+          const paramsCandidate =
+            tool?.parameters ||
+            tool?.schema ||
+            tool?.input_schema ||
+            tool?.openapi_schema ||
+            { type: 'object', properties: {}, required: [] };
+
+          const toolDescription = tool?.description || tool?.summary || `Execute ${cleanToolName}`;
+
+          const parameters = {
+            type: 'object',
+            properties: paramsCandidate.properties || {},
+            required: paramsCandidate.required || [],
+          };
+
+          const formattedTool = {
+            type: 'function',
+            function: {
+              name: cleanToolName,
+              description: toolDescription,
+              parameters,
+            },
+          };
+
+          console.log(`[jarvis-agent] Formatted tool:`, formattedTool);
+          return formattedTool;
+        } catch (e) {
+          console.warn('[jarvis-agent] Error processing tool, skipping:', e);
           return null;
         }
-
-        // Clean tool name for OpenAI compatibility
-        const cleanToolName = toolName.replace(/[^a-zA-Z0-9_]/g, '_').toUpperCase();
-
-        const paramsCandidate =
-          tool?.parameters ||
-          tool?.schema ||
-          tool?.input_schema ||
-          tool?.openapi_schema ||
-          { type: 'object', properties: {}, required: [] };
-
-        const toolDescription = tool?.description || tool?.summary || `Execute ${cleanToolName}`;
-
-        const parameters = {
-          type: 'object',
-          properties: paramsCandidate.properties || {},
-          required: paramsCandidate.required || [],
-        };
-
-        const formattedTool = {
-          type: 'function',
-          function: {
-            name: cleanToolName,
-            description: toolDescription,
-            parameters,
-          },
-        };
-        
-        console.log(`[jarvis-agent] Formatted tool:`, formattedTool);
-        return formattedTool;
       })
       .filter(Boolean as any);
 
