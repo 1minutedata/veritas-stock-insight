@@ -22,6 +22,12 @@ serve(async (req) => {
   try {
     const { userId, message, connectedIntegrations }: JarvisRequest = await req.json();
     
+    // Extract auth headers for forwarding to composio-auth
+    const authHeaders = {
+      'authorization': req.headers.get('authorization') || '',
+      'apikey': req.headers.get('apikey') || '',
+    };
+    
     console.log(`[jarvis-agent] Processing request for user: ${userId}`, { 
       message, 
       connectedIntegrations 
@@ -234,6 +240,7 @@ User ID: ${userId}`;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...authHeaders, // Forward auth headers
           },
           body: JSON.stringify({
             action: 'executeAction',
