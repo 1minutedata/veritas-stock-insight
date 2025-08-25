@@ -90,7 +90,7 @@ serve(async (req) => {
       }
     }
 
-    // Create OpenAI tools format - handle both SDK and REST formats, filter invalid names
+    // Create OpenAI tools format - handle both SDK and REST formats
     const openaiTools = availableTools
       .map((tool: any) => {
         console.log(`[jarvis-agent] Processing tool:`, tool);
@@ -104,11 +104,14 @@ serve(async (req) => {
           '';
         const toolName = String(nameCandidate || '').trim();
         
-        // Skip invalid tool names
-        if (!toolName || toolName.includes(' ') || !toolName.match(/^[A-Z_]+$/)) {
-          console.log(`[jarvis-agent] Skipping invalid tool name: ${toolName}`);
+        // More lenient tool name validation - just ensure it exists and doesn't have special chars
+        if (!toolName || toolName.length === 0) {
+          console.log(`[jarvis-agent] Skipping empty tool name`);
           return null;
         }
+
+        // Clean tool name for OpenAI compatibility
+        const cleanToolName = toolName.replace(/[^a-zA-Z0-9_]/g, '_').toUpperCase();
 
         const paramsCandidate =
           tool?.parameters ||
@@ -117,7 +120,7 @@ serve(async (req) => {
           tool?.openapi_schema ||
           { type: 'object', properties: {}, required: [] };
 
-        const toolDescription = tool?.description || tool?.summary || `Execute ${toolName}`;
+        const toolDescription = tool?.description || tool?.summary || `Execute ${cleanToolName}`;
 
         const parameters = {
           type: 'object',
@@ -128,7 +131,7 @@ serve(async (req) => {
         const formattedTool = {
           type: 'function',
           function: {
-            name: toolName,
+            name: cleanToolName,
             description: toolDescription,
             parameters,
           },
