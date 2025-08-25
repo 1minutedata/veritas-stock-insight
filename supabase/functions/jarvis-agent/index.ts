@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Composio } from "npm:@composio/core";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,46 +47,74 @@ serve(async (req) => {
 
     console.log(`[jarvis-agent] Fetching tools for toolkits:`, toolkits);
 
-    // Fetch tools from Composio
-    const toolsResponse = await fetch('https://backend.composio.dev/api/v2/actions', {
-      method: 'GET',
-      headers: {
-        'X-API-Key': composioApiKey,
-        'Content-Type': 'application/json',
-      },
+    // Initialize Composio client for tool filtering
+    const composio = new Composio({
+      apiKey: composioApiKey,
     });
 
     let availableTools = [];
-    if (toolsResponse.ok) {
-      const toolsData = await toolsResponse.json();
-      // Filter tools for connected integrations
-      availableTools = (toolsData.items || [])
-        .filter((tool: any) => {
-          const toolName = tool.name || tool.slug || '';
-          return toolkits.some(toolkit => toolName.startsWith(toolkit));
-        })
-        .slice(0, 10); // Limit to 10 most relevant tools
+    try {
+      // Use Composio SDK to filter tools by connected integrations
+      const toolsResult = await (composio as any).tools.get(userId, {
+        toolkits: toolkits,
+        limit: 10, // Limit to 10 most relevant tools per toolkit
+      });
       
-      console.log(`[jarvis-agent] Found ${availableTools.length} available tools`);
-    } else {
-      console.warn('[jarvis-agent] Failed to fetch tools from Composio');
+      availableTools = toolsResult || [];
+      console.log(`[jarvis-agent] Composio SDK returned ${availableTools.length} tools`);
+    } catch (sdkError: any) {
+      console.warn(`[jarvis-agent] SDK tool fetching failed, falling back to REST:`, sdkError?.message);
+      
+      // Fallback to REST API for tool fetching
+      const toolsResponse = await fetch('https://backend.composio.dev/api/v2/actions', {
+        method: 'GET',
+        headers: {
+          'X-API-Key': composioApiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (toolsResponse.ok) {
+        const toolsData = await toolsResponse.json();
+        // Filter tools for connected integrations
+        availableTools = (toolsData.items || [])
+          .filter((tool: any) => {
+            const toolName = tool.name || tool.slug || '';
+            return toolkits.some(toolkit => toolName.startsWith(toolkit));
+          })
+          .slice(0, 10); // Limit to 10 most relevant tools
+        
+        console.log(`[jarvis-agent] REST API returned ${availableTools.length} filtered tools`);
+      } else {
+        console.warn('[jarvis-agent] Failed to fetch tools from Composio REST API');
+      }
     }
 
-    // Create OpenAI tools format
-    const openaiTools = availableTools.map((tool: any) => ({
-      type: 'function',
-      function: {
-        name: tool.name || tool.slug,
-        description: tool.description || `Execute ${tool.name || tool.slug}`,
-        parameters: {
-          type: 'object',
-          properties: tool.parameters?.properties || {},
-          required: tool.parameters?.required || [],
+    // Create OpenAI tools format - handle both SDK and REST formats
+    const openaiTools = availableTools.map((tool: any) => {
+      // Handle both Composio SDK format and REST API format
+      const toolName = tool.name || tool.slug || tool.action;
+      const toolDescription = tool.description || `Execute ${toolName}`;
+      const toolParameters = tool.parameters || tool.schema || { type: 'object', properties: {}, required: [] };
+      
+      return {
+        type: 'function',
+        function: {
+          name: toolName,
+          description: toolDescription,
+          parameters: {
+            type: 'object',
+            properties: toolParameters.properties || {},
+            required: toolParameters.required || [],
+          },
         },
-      },
-    }));
+      };
+    });
 
     console.log(`[jarvis-agent] Created ${openaiTools.length} OpenAI-formatted tools`);
+    if (openaiTools.length > 0) {
+      console.log(`[jarvis-agent] Sample tool:`, JSON.stringify(openaiTools[0], null, 2));
+    }
 
     // Determine the appropriate system prompt based on connected integrations
     const systemPrompt = `You are Jarvis, an intelligent AI assistant that can execute actions across various platforms.

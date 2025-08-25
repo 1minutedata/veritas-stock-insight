@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link, Mail, MessageSquare, FileText, CheckCircle, Zap } from "lucide-react";
 
 interface Integration {
@@ -69,6 +70,7 @@ interface MultiIntegrationAuthProps {
 
 export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAuthProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [userEmail, setUserEmail] = useState("");
   const [loadingIntegration, setLoadingIntegration] = useState<string | null>(null);
   const [connectionStates, setConnectionStates] = useState<Record<string, {
@@ -77,6 +79,40 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
     connectionRequestId?: string;
     lastError?: string;
   }>>({});
+
+  // Auto-fill email and check existing connections
+  useEffect(() => {
+    if (user?.email) {
+      setUserEmail(user.email);
+      // Check existing connections for all integrations
+      checkExistingConnections(user.email);
+    }
+  }, [user]);
+
+  const checkExistingConnections = async (email: string) => {
+    for (const integration of integrations) {
+      try {
+        const { data, error } = await supabase.functions.invoke('composio-auth', {
+          body: {
+            action: 'initiate',
+            userId: email,
+            authConfigId: integration.authConfigId,
+          }
+        });
+
+        if (!error && data?.status === 'connected') {
+          setConnectionStates(prev => ({
+            ...prev,
+            [integration.id]: { status: 'connected' }
+          }));
+          onConnectionSuccess?.(integration.id, email);
+        }
+      } catch (e) {
+        // Silently ignore errors during connection checking
+        console.log(`[MultiIntegrationAuth] Could not check existing connection for ${integration.id}`);
+      }
+    }
+  };
 
   const handleInitiateConnection = async (integration: Integration) => {
     if (!userEmail) {
@@ -225,6 +261,7 @@ export const MultiIntegrationAuth = ({ onConnectionSuccess }: MultiIntegrationAu
               value={userEmail}
               onChange={(e) => setUserEmail(e.target.value)}
               className="mt-1 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+              disabled={!!user?.email} // Disable if user is logged in
             />
           </div>
         </div>
