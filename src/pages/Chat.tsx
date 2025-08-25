@@ -40,7 +40,7 @@ const Chat = () => {
       if (cmd?.kind === "gmail") {
         actionData = {
           action: "GMAIL_SEND_EMAIL",
-          parameters: { to_email: cmd.to, subject: cmd.subject, body: cmd.body }
+          parameters: { recipient_email: cmd.to, subject: cmd.subject, body: cmd.body }
         };
         integrationLabel = "Gmail";
       } else if (cmd?.kind === "slack") {

@@ -250,14 +250,18 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
     } as any;
   }
 
-  // 1) Try direct SDK execution using tools.execute method
+  // 1) Normalize parameters (alias support) and try direct SDK execution using tools.execute method
+  const rawParams = actionData.parameters || {};
+  const normalizedParams = { ...rawParams };
+  if (rawParams.to_email && !rawParams.recipient_email) normalizedParams.recipient_email = rawParams.to_email;
+
   if (client && (client as any).tools?.execute) {
     try {
       console.log(`[composio-auth] Attempting SDK tools.execute for action: ${actionData.action}`);
       // Correct SDK signature: tools.execute(toolSlug, { userId, arguments })
       const data = await (client as any).tools.execute(
         actionData.action,
-        { userId, arguments: actionData.parameters || {} }
+        { userId, arguments: normalizedParams }
       );
       console.log('[composio-auth] SDK tools.execute successful:', data);
       return {
@@ -284,7 +288,7 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
   if (client && (client as any).actions?.execute) {
     try {
       console.log(`[composio-auth] Attempting SDK actions.execute for action: ${actionData.action}`);
-      const data = await (client as any).actions.execute(userId, actionData.action, actionData.parameters || {});
+      const data = await (client as any).actions.execute(userId, actionData.action, normalizedParams);
       console.log('[composio-auth] SDK actions.execute successful:', data);
       return {
         success: true,
@@ -312,13 +316,13 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
     {
       url: `${baseUrlV2}/actions/execute`,
       method: 'POST',
-      body: JSON.stringify({ userId, action: actionData.action, parameters: actionData.parameters || {} }),
+      body: JSON.stringify({ userId, action: actionData.action, parameters: normalizedParams }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
     {
       url: `${altBaseUrlV2}/actions/execute`,
       method: 'POST',
-      body: JSON.stringify({ userId, action: actionData.action, parameters: actionData.parameters || {} }),
+      body: JSON.stringify({ userId, action: actionData.action, parameters: normalizedParams }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },
     {
@@ -327,7 +331,7 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
       body: JSON.stringify({
         user_id: userId,
         tool: actionData.action,
-        arguments: actionData.parameters || {},
+        arguments: normalizedParams,
       }),
       headers: { 'X-API-Key': composioApiKey, 'Content-Type': 'application/json' },
     },

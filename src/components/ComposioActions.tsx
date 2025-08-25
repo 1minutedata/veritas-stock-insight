@@ -66,7 +66,7 @@ VeritasPilot AI
           actionData: {
             action: 'GMAIL_SEND_EMAIL',
             parameters: {
-              to_email: recipientEmail,
+              recipient_email: recipientEmail,
               subject: subject,
               body: body,
             }

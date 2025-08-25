@@ -90,26 +90,43 @@ serve(async (req) => {
       }
     }
 
-    // Create OpenAI tools format - handle both SDK and REST formats
-    const openaiTools = availableTools.map((tool: any) => {
-      // Handle both Composio SDK format and REST API format
-      const toolName = tool.name || tool.slug || tool.action;
-      const toolDescription = tool.description || `Execute ${toolName}`;
-      const toolParameters = tool.parameters || tool.schema || { type: 'object', properties: {}, required: [] };
-      
-      return {
-        type: 'function',
-        function: {
-          name: toolName,
-          description: toolDescription,
-          parameters: {
-            type: 'object',
-            properties: toolParameters.properties || {},
-            required: toolParameters.required || [],
+    // Create OpenAI tools format - handle both SDK and REST formats, filter invalid names
+    const openaiTools = availableTools
+      .map((tool: any) => {
+        const nameCandidate =
+          tool?.name ||
+          tool?.slug ||
+          tool?.action ||
+          tool?.id ||
+          tool?.tool ||
+          '';
+        const toolName = String(nameCandidate || '').trim();
+        if (!toolName) return null;
+
+        const paramsCandidate =
+          tool?.parameters ||
+          tool?.schema ||
+          tool?.input_schema ||
+          { type: 'object', properties: {}, required: [] };
+
+        const toolDescription = tool?.description || `Execute ${toolName}`;
+
+        const parameters = {
+          type: 'object',
+          properties: paramsCandidate.properties || {},
+          required: paramsCandidate.required || [],
+        };
+
+        return {
+          type: 'function',
+          function: {
+            name: toolName,
+            description: toolDescription,
+            parameters,
           },
-        },
-      };
-    });
+        };
+      })
+      .filter(Boolean as any);
 
     console.log(`[jarvis-agent] Created ${openaiTools.length} OpenAI-formatted tools`);
     if (openaiTools.length > 0) {

@@ -224,7 +224,7 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
                     const body = actionData.gmail.content.replace(subjectLine || '', '').trim();
                     
                     executeAction('gmail', 'GMAIL_SEND_EMAIL', {
-                      to_email: actionData.gmail.recipient,
+                      recipient_email: actionData.gmail.recipient,
                       subject,
                       body
                     });
