@@ -26,6 +26,11 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
     { role: "assistant", content: "Hi! I'm Jarvis, your AI assistant. I can help you with emails, Slack messages, and QuickBooks entries. Just give me natural language instructions and I'll execute the appropriate tools for you.\n\nStart by entering your email below (used as your user ID)." }
   ]);
   const [sending, setSending] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<Array<{
+    role: 'user' | 'assistant' | 'tool';
+    content: string;
+    toolCallId?: string;
+  }>>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -54,12 +59,17 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
     setSending(true);
 
     try {
+      // Update conversation history with user message
+      const newUserMessage = { role: 'user' as const, content: trimmed };
+      const updatedHistory = [...conversationHistory, newUserMessage];
+
       // Call the Jarvis agent
       const { data, error } = await supabase.functions.invoke('jarvis-agent', {
         body: {
           userId: userEmail,
           message: trimmed,
-          connectedIntegrations
+          connectedIntegrations,
+          conversationHistory: updatedHistory
         }
       });
 
@@ -68,10 +78,23 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
       }
 
       if (data?.success) {
+        const assistantMessage = data.message || "Task completed successfully!";
+        
         append({ 
           role: "assistant", 
-          content: data.message || "Task completed successfully!" 
+          content: assistantMessage
         });
+
+        // Update conversation history with assistant response
+        const newAssistantMessage = { role: 'assistant' as const, content: assistantMessage };
+        const finalHistory = [...updatedHistory, newAssistantMessage];
+        
+        // If the response includes updated conversation history from the agent, use that instead
+        if (data.conversationHistory) {
+          setConversationHistory(data.conversationHistory);
+        } else {
+          setConversationHistory(finalHistory);
+        }
         
         if (data.toolsExecuted > 0) {
           toast({ 

@@ -11,6 +11,11 @@ interface JarvisRequest {
   userId: string;
   message: string;
   connectedIntegrations: string[];
+  conversationHistory?: Array<{
+    role: 'user' | 'assistant' | 'tool';
+    content: string;
+    toolCallId?: string;
+  }>;
 }
 
 serve(async (req) => {
@@ -20,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, message, connectedIntegrations }: JarvisRequest = await req.json();
+    const { userId, message, connectedIntegrations, conversationHistory = [] }: JarvisRequest = await req.json();
     
     // Extract auth headers for forwarding to composio-auth
     const authHeaders = {
@@ -180,119 +185,39 @@ serve(async (req) => {
 Available integrations: ${connectedIntegrations.join(', ')}
 
 You can help with:
-- Gmail: Send emails, read messages, manage inbox
-- Slack: Send messages, create channels, manage workspace
+- Gmail: Send emails, create drafts, read messages, manage inbox
+- Slack: Send messages, create channels, manage workspace  
 - QuickBooks: Create entries, manage finances, generate reports
 
 When a user asks you to do something, analyze their request and use the appropriate tool to execute the action. Always be helpful and execute the requested actions efficiently.
 
+IMPORTANT CONTEXT RULES:
+- Pay attention to conversation history and follow-up requests
+- If a user confirms an action (like "Yes please", "Send it", "Do it"), execute the appropriate tool based on the previous context
+- If you previously drafted an email and user asks to send it, use GMAIL_SEND_EMAIL instead of creating another draft
+- Maintain conversation context and understand implicit requests
+
 User ID: ${userId}`;
 
-    // First, get OpenAI's response to determine what tools to call
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
-        tools: openaiTools,
-        tool_choice: 'auto',
-        temperature: 0.1,
-      }),
-    });
+    // Build conversation messages including history
+    const conversationMessages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: message }
+    ];
 
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('[jarvis-agent] OpenAI API error:', errorText);
-      return new Response(JSON.stringify({ 
-        error: 'Failed to process request with OpenAI',
-        details: errorText 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    console.log(`[jarvis-agent] Conversation messages:`, conversationMessages);
 
-    const openaiData = await openaiResponse.json();
-    console.log('[jarvis-agent] OpenAI response:', JSON.stringify(openaiData, null, 2));
+    // Implement agentic approach with multiple steps
+    let currentMessages = conversationMessages;
+    let finalAssistantMessage = '';
+    let totalToolsExecuted = 0;
+    const maxSteps = 3; // Allow up to 3 reasoning steps
 
-    const choice = openaiData.choices[0];
-    let assistantMessage = choice.message.content || 'I understand your request.';
-    const toolCalls = choice.message.tool_calls || [];
-
-    // Execute any tool calls
-    const toolResults = [];
-    for (const toolCall of toolCalls) {
-      const functionName = toolCall.function.name;
-      const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+    for (let step = 0; step < maxSteps; step++) {
+      console.log(`[jarvis-agent] Step ${step + 1}/${maxSteps}`);
       
-      console.log(`[jarvis-agent] Executing tool: ${functionName}`, functionArgs);
-
-      try {
-        // Execute the tool using Composio
-        const executeResponse = await fetch(`https://wssfoultuhczalslwdmd.supabase.co/functions/v1/composio-auth`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...authHeaders, // Forward auth headers
-          },
-          body: JSON.stringify({
-            action: 'executeAction',
-            userId: userId,
-            actionData: {
-              action: functionName,
-              parameters: functionArgs,
-            },
-          }),
-        });
-
-        if (executeResponse.ok) {
-          const executeData = await executeResponse.json();
-          toolResults.push({
-            toolCall: toolCall.id,
-            result: executeData,
-            success: true,
-          });
-          console.log(`[jarvis-agent] Tool ${functionName} executed successfully:`, executeData);
-        } else {
-          const errorData = await executeResponse.text();
-          console.error(`[jarvis-agent] Tool ${functionName} execution failed:`, errorData);
-          toolResults.push({
-            toolCall: toolCall.id,
-            result: { error: errorData },
-            success: false,
-          });
-        }
-      } catch (error) {
-        console.error(`[jarvis-agent] Error executing tool ${functionName}:`, error);
-        toolResults.push({
-          toolCall: toolCall.id,
-          result: { error: error.message },
-          success: false,
-        });
-      }
-    }
-
-    // If tools were executed, get a final response from OpenAI
-    if (toolResults.length > 0) {
-      const finalMessages = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-        choice.message,
-        ...toolResults.map(result => ({
-          role: 'tool',
-          tool_call_id: result.toolCall,
-          content: JSON.stringify(result.result),
-        })),
-      ];
-
-      const finalResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${openaiApiKey}`,
@@ -300,22 +225,113 @@ User ID: ${userId}`;
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
-          messages: finalMessages,
+          messages: currentMessages,
+          tools: openaiTools,
+          tool_choice: 'auto',
           temperature: 0.1,
         }),
       });
 
-      if (finalResponse.ok) {
-        const finalData = await finalResponse.json();
-        assistantMessage = finalData.choices[0].message.content;
-        console.log('[jarvis-agent] Final assistant response:', assistantMessage);
+      if (!openaiResponse.ok) {
+        const errorText = await openaiResponse.text();
+        console.error('[jarvis-agent] OpenAI API error:', errorText);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to process request with OpenAI',
+          details: errorText 
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
+
+      const openaiData = await openaiResponse.json();
+      console.log(`[jarvis-agent] Step ${step + 1} OpenAI response:`, JSON.stringify(openaiData, null, 2));
+
+      const choice = openaiData.choices[0];
+      finalAssistantMessage = choice.message.content || 'I understand your request.';
+      const toolCalls = choice.message.tool_calls || [];
+
+      // Add assistant message to current conversation
+      currentMessages.push(choice.message);
+
+      // If no tools to call, we're done
+      if (!toolCalls || toolCalls.length === 0) {
+        console.log(`[jarvis-agent] No tools to call, conversation complete`);
+        break;
+      }
+
+      // Execute tool calls
+      const stepToolResults = [];
+      for (const toolCall of toolCalls) {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments || '{}');
+        
+        console.log(`[jarvis-agent] Executing tool: ${functionName}`, functionArgs);
+
+        try {
+          // Execute the tool using Composio
+          const executeResponse = await fetch(`https://wssfoultuhczalslwdmd.supabase.co/functions/v1/composio-auth`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders,
+            },
+            body: JSON.stringify({
+              action: 'executeAction',
+              userId: userId,
+              actionData: {
+                action: functionName,
+                parameters: functionArgs,
+              },
+            }),
+          });
+
+          if (executeResponse.ok) {
+            const executeData = await executeResponse.json();
+            stepToolResults.push({
+              toolCall: toolCall.id,
+              result: executeData,
+              success: true,
+            });
+            totalToolsExecuted++;
+            console.log(`[jarvis-agent] Tool ${functionName} executed successfully:`, executeData);
+          } else {
+            const errorData = await executeResponse.text();
+            console.error(`[jarvis-agent] Tool ${functionName} execution failed:`, errorData);
+            stepToolResults.push({
+              toolCall: toolCall.id,
+              result: { error: errorData },
+              success: false,
+            });
+          }
+        } catch (error) {
+          console.error(`[jarvis-agent] Error executing tool ${functionName}:`, error);
+          stepToolResults.push({
+            toolCall: toolCall.id,
+            result: { error: error.message },
+            success: false,
+          });
+        }
+      }
+
+      // Add tool results to conversation
+      for (const result of stepToolResults) {
+        currentMessages.push({
+          role: 'tool',
+          tool_call_id: result.toolCall,
+          content: JSON.stringify(result.result),
+        });
+      }
+
+      // Continue to next step if there were tool executions
+      console.log(`[jarvis-agent] Step ${step + 1} completed with ${stepToolResults.length} tool executions`);
     }
 
     return new Response(JSON.stringify({
-      message: assistantMessage,
-      toolsExecuted: toolResults.length,
+      message: finalAssistantMessage,
+      toolsExecuted: totalToolsExecuted,
       success: true,
+      conversationHistory: currentMessages.slice(1), // Exclude system message for client
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
