@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,13 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
     { role: "assistant", content: "Hi! I'm Jarvis, your AI assistant. I can help you with emails, Slack messages, and QuickBooks entries. Just give me natural language instructions and I'll execute the appropriate tools for you.\n\nStart by entering your email below (used as your user ID)." }
   ]);
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const email = data?.user?.email || '';
+      if (email) setUserEmail(email);
+    });
+  }, []);
 
   const append = (msg: Message) => setMessages(prev => [...prev, msg]);
 
@@ -93,24 +100,23 @@ const ChatWidget = ({ connectedIntegrations = ['gmail', 'slack', 'quickbooks'] }
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
-        {/* Speech bubble */}
-        <div className="mb-2 mr-2 relative">
-          <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg max-w-[200px] text-sm text-gray-700">
-            Give me instructions
-            {/* Arrow pointing down-right */}
-            <div className="absolute bottom-0 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white transform translate-y-full"></div>
-            <div className="absolute bottom-0 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-gray-200 transform translate-y-full translate-y-[1px]"></div>
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className="relative">
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+            size="icon"
+          >
+            <Bot className="h-6 w-6" />
+          </Button>
+          <div className="absolute -top-2 right-0 translate-y-[-100%] mb-2">
+            <div className="relative bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg max-w-[220px] text-sm text-gray-700">
+              Give me instructions
+              <div className="absolute -bottom-2 right-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white"></div>
+              <div className="absolute -bottom-[9px] right-4 w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-t-[9px] border-t-gray-200"></div>
+            </div>
           </div>
         </div>
-        
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-          size="icon"
-        >
-          <Bot className="h-6 w-6" />
-        </Button>
       </div>
     );
   }

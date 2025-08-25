@@ -254,7 +254,11 @@ async function executeAction(composioApiKey: string, userId: string, actionData:
   if (client && (client as any).tools?.execute) {
     try {
       console.log(`[composio-auth] Attempting SDK tools.execute for action: ${actionData.action}`);
-      const data = await (client as any).tools.execute(actionData.action, userId, actionData.parameters || {});
+      // Correct SDK signature: tools.execute(toolSlug, { userId, arguments })
+      const data = await (client as any).tools.execute(
+        actionData.action,
+        { userId, arguments: actionData.parameters || {} }
+      );
       console.log('[composio-auth] SDK tools.execute successful:', data);
       return {
         success: true,
