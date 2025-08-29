@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, Bot, Loader2 } from "lucide-react";
+import { Send, Bot, Loader2, Settings } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -19,12 +20,32 @@ const LangflowChat = () => {
   ]);
   const [sending, setSending] = useState(false);
   const [sessionId] = useState(`user_${Date.now()}`);
+  const [showSettings, setShowSettings] = useState(false);
+  const [baseUrl, setBaseUrl] = useState<string>(() => localStorage.getItem('langflow_base_url') || '');
+  const [flowId, setFlowId] = useState<string>(() => localStorage.getItem('langflow_flow_id') || '');
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('langflow_api_key') || '');
 
   const append = (msg: Message) => setMessages(prev => [...prev, msg]);
+
+  const saveSettings = () => {
+    localStorage.setItem('langflow_base_url', baseUrl.trim());
+    localStorage.setItem('langflow_flow_id', flowId.trim());
+    if (apiKey.trim()) localStorage.setItem('langflow_api_key', apiKey.trim());
+    toast({ title: 'Saved', description: 'Langflow settings updated' });
+  };
 
   const onSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
+
+    if (!baseUrl || !flowId) {
+      toast({
+        title: 'Missing settings',
+        description: 'Please set Base URL and Flow ID in Settings',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     append({ role: "user", content: trimmed });
     setInput("");
@@ -34,7 +55,11 @@ const LangflowChat = () => {
       const { data, error } = await supabase.functions.invoke('langflow-chat', {
         body: {
           message: trimmed,
-          sessionId
+          sessionId,
+          baseUrl,
+          flowId,
+          // Optional: allow override from UI for dev; server prefers secret
+          apiKey: apiKey || undefined,
         }
       });
 
@@ -69,10 +94,26 @@ const LangflowChat = () => {
 
   return (
     <Card className="flex flex-col h-[600px] w-full">
-      <div className="flex items-center gap-2 p-4 border-b">
-        <Bot className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">AI Assistant</h3>
+      <div className="flex items-center justify-between gap-2 p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          <h1 className="font-semibold text-lg">Veritasier — Your Assistant</h1>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => setShowSettings((s) => !s)}>
+          <Settings className="h-4 w-4 mr-2" /> Settings
+        </Button>
       </div>
+
+      {showSettings && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border-b bg-card/50">
+          <Input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="Langflow Base URL (https://...)" />
+          <Input value={flowId} onChange={(e) => setFlowId(e.target.value)} placeholder="Flow ID (UUID)" />
+          <div className="flex gap-2">
+            <Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="API Key (optional)" type="password" />
+            <Button onClick={saveSettings}>Save</Button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((m, idx) => {

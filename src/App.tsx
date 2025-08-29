@@ -5,14 +5,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import Index from "./pages/Index";
-import Landing from "./pages/Landing";
+import Layout from "./components/Layout";
+import Assistant from "./pages/Assistant";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Success from "./pages/Success";
 import Integrations from "./pages/Integrations";
+import Payments from "./pages/Payments";
+import LinkCard from "./pages/LinkCard";
+import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
-import Chat from "./pages/Chat";
 import ChatWidget from "./components/ChatWidget";
 
 const queryClient = new QueryClient();
@@ -25,14 +27,29 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            {/* Default: Your Assistant */}
+            <Route path="/" element={<Layout><Assistant /></Layout>} />
+
+            {/* Live Market Insights */}
+            <Route path="/market" element={<Layout><Dashboard /></Layout>} />
+
+            {/* Manage Integrations */}
+            <Route path="/integrations" element={<Layout><Integrations /></Layout>} />
+
+            {/* Payment Processing */}
+            <Route path="/payments" element={<Layout><Payments /></Layout>} />
+
+            {/* Linking Your Card */}
+            <Route path="/link-card" element={<Layout><LinkCard /></Layout>} />
+
+            {/* Build Your Shop */}
+            <Route path="/shop" element={<Layout><Shop /></Layout>} />
+
+            {/* Auth & other pages (not in sidebar) */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/success" element={<Success />} />
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="/chat" element={<Chat />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
           <ChatWidget />
