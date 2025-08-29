@@ -5,6 +5,7 @@ import { StockCard } from "@/components/StockCard";
 import { NewsCard } from "@/components/NewsCard";
 import { AIAnalysis } from "@/components/AIAnalysis";
 import SubscriptionCard from "@/components/SubscriptionCard";
+import LangflowChat from "@/components/LangflowChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, TrendingUp, DollarSign, BarChart3, Zap } from "lucide-react";
@@ -252,51 +253,59 @@ const Dashboard = () => {
           </div>
         )}
 
-        {selectedStock && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <StockCard stock={selectedStock} />
-              
-              <Card className="p-6 shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">AI Analysis</h3>
-                  <button
-                    onClick={() => handleAnalyze(selectedStock.symbol)}
-                    disabled={analysisLoading}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
-                  >
-                    {analysisLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Analyze with AI"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {selectedStock && (
+              <>
+                <div className="space-y-4">
+                  <StockCard stock={selectedStock} />
+                  
+                  <Card className="p-6 shadow-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-semibold">AI Analysis</h3>
+                      <button
+                        onClick={() => handleAnalyze(selectedStock.symbol)}
+                        disabled={analysisLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+                      >
+                        {analysisLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Analyze with AI"
+                        )}
+                      </button>
+                    </div>
+                    
+                    {analysis && (
+                      <AIAnalysis {...analysis} />
                     )}
-                  </button>
+                  </Card>
                 </div>
                 
-                {analysis && (
-                  <AIAnalysis {...analysis} />
-                )}
-              </Card>
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold">Latest News</h3>
-              {news.map((item, index) => (
-                <NewsCard 
-                  key={index} 
-                  news={{
-                    title: item.title,
-                    summary: item.description || "",
-                    publisher: item.source || "Unknown",
-                    publishTime: (item as any).publishTime ?? (item.publishedAt ? Math.floor(new Date(item.publishedAt).getTime() / 1000) : Math.floor(Date.now() / 1000)),
-                    link: item.url || (item as any).link || "#",
-                    uuid: `${index}-${item.title}`
-                  }} 
-                />
-              ))}
-            </div>
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold">Latest News</h3>
+                  {news.map((item, index) => (
+                    <NewsCard 
+                      key={index} 
+                      news={{
+                        title: item.title,
+                        summary: item.description || "",
+                        publisher: item.source || "Unknown",
+                        publishTime: (item as any).publishTime ?? (item.publishedAt ? Math.floor(new Date(item.publishedAt).getTime() / 1000) : Math.floor(Date.now() / 1000)),
+                        link: item.url || (item as any).link || "#",
+                        uuid: `${index}-${item.title}`
+                      }} 
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        )}
+          
+          <div className="lg:col-span-1">
+            <LangflowChat />
+          </div>
+        </div>
       </div>
     </div>
   );
