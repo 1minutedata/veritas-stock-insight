@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider collapsedWidth={56}>
+    <SidebarProvider>
       <header className="h-12 flex items-center border-b px-3">
         <SidebarTrigger className="mr-2" />
         <div className="font-semibold">Veritasier</div>
