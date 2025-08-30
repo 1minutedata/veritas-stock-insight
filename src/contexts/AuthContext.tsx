@@ -13,6 +13,8 @@ interface AuthContextType {
   session: Session | null;
   subscription: SubscriptionData | null;
   loading: boolean;
+  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   checkSubscription: () => Promise<void>;
 }
@@ -22,6 +24,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   subscription: null,
   loading: true,
+  signUp: async () => ({ error: null }),
+  signIn: async () => ({ error: null }),
   signOut: async () => {},
   checkSubscription: async () => {},
 });
@@ -55,6 +59,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Error checking subscription:', error);
       setSubscription({ subscribed: false });
     }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
+    });
+    return { error };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
   };
 
   const signOut = async () => {
@@ -104,6 +129,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     subscription,
     loading,
+    signUp,
+    signIn,
     signOut,
     checkSubscription,
   };

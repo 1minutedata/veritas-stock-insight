@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
+import Index from "./pages/Index";
 import Assistant from "./pages/Assistant";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -27,23 +29,50 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Default: Your Assistant */}
-            <Route path="/" element={<Layout><Assistant /></Layout>} />
+            {/* Landing/Dashboard route */}
+            <Route path="/" element={<Index />} />
+
+            {/* Your Assistant */}
+            <Route path="/assistant" element={
+              <ProtectedRoute>
+                <Layout><Assistant /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Live Market Insights */}
-            <Route path="/market" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/market" element={
+              <ProtectedRoute>
+                <Layout><Dashboard /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Manage Integrations */}
-            <Route path="/integrations" element={<Layout><Integrations /></Layout>} />
+            <Route path="/integrations" element={
+              <ProtectedRoute>
+                <Layout><Integrations /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Payment Processing */}
-            <Route path="/payments" element={<Layout><Payments /></Layout>} />
+            <Route path="/payments" element={
+              <ProtectedRoute>
+                <Layout><Payments /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Linking Your Card */}
-            <Route path="/link-card" element={<Layout><LinkCard /></Layout>} />
+            <Route path="/link-card" element={
+              <ProtectedRoute>
+                <Layout><LinkCard /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Build Your Shop */}
-            <Route path="/shop" element={<Layout><Shop /></Layout>} />
+            <Route path="/shop" element={
+              <ProtectedRoute>
+                <Layout><Shop /></Layout>
+              </ProtectedRoute>
+            } />
 
             {/* Auth & other pages (not in sidebar) */}
             <Route path="/auth" element={<Auth />} />
