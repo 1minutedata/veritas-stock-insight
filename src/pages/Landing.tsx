@@ -15,7 +15,7 @@ const Landing = () => {
       <footer className="py-12 border-t border-border/50 bg-card/20 backdrop-blur-sm">
         <div className="container mx-auto px-6 text-center">
           <p className="text-muted-foreground">
-            © 2024 VeritasPilot. All rights reserved.
+            © 2024 Veritasier. All rights reserved.
           </p>
         </div>
       </footer>
