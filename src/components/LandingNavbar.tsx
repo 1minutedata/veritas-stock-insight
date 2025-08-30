@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
+import { VeritasierLogo } from "@/components/VeritasierLogo";
 
 export function LandingNavbar() {
   return (
@@ -8,22 +9,22 @@ export function LandingNavbar() {
       <div className="bg-card/80 backdrop-blur-lg rounded-full border border-border/50 px-8 py-4 shadow-glow">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">VeritasPilot</span>
+            <CreditCard className="h-6 w-6 text-primary" />
+            <VeritasierLogo size="sm" className="text-foreground" />
           </div>
           
           <div className="hidden md:flex items-center gap-6 text-sm">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              Payment Solutions
             </a>
             <a href="#integrations" className="text-muted-foreground hover:text-foreground transition-colors">
-              Integrations
+              Business Tools
             </a>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
             <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
-              About
+              Support
             </a>
           </div>
           
@@ -35,7 +36,7 @@ export function LandingNavbar() {
             </Link>
             <Link to="/auth">
               <Button size="sm" className="rounded-full bg-gradient-primary hover:opacity-90">
-                Start Free Trial
+                Start Processing Payments
               </Button>
             </Link>
           </div>

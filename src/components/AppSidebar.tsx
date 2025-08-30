@@ -1,21 +1,21 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Bot, LineChart, Plug, CreditCard, Link as LinkIcon, Store } from "lucide-react";
+import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { VeritasierLogo } from "@/components/VeritasierLogo";
 
 const items = [
   { title: "Your Assistant", url: "/", icon: Bot },
-  { title: "Live Market Insights", url: "/market", icon: LineChart },
-  { title: "Manage Integrations", url: "/integrations", icon: Plug },
+  { title: "Live Market Insights", url: "/market", icon: TrendingUp },
+  { title: "Manage Integrations", url: "/integrations", icon: Settings },
   { title: "Payment Processing", url: "/payments", icon: CreditCard },
   { title: "Linking Your Card", url: "/link-card", icon: LinkIcon },
   { title: "Build Your Shop", url: "/shop", icon: Store },
@@ -29,21 +29,41 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    isActive 
+      ? "bg-primary/10 text-primary border-r-2 border-primary font-medium" 
+      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground";
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Veritasier</SidebarGroupLabel>
+    <Sidebar collapsible="icon" className="border-r border-border/50">
+      <SidebarContent className="bg-card/50 backdrop-blur-sm">
+        {/* Logo Section */}
+        <div className="p-4 border-b border-border/50">
+          <div className="flex items-center justify-center">
+            {!collapsed ? (
+              <div className="bg-gradient-primary rounded-lg p-3">
+                <VeritasierLogo size="sm" />
+              </div>
+            ) : (
+              <div className="bg-gradient-primary rounded-lg p-2 w-8 h-8 flex items-center justify-center">
+                <Home className="h-4 w-4 text-white" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <SidebarGroup className="px-2">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="h-10">
                     <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {!collapsed && (
+                        <span className="truncate text-sm font-medium">
+                          {item.title}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

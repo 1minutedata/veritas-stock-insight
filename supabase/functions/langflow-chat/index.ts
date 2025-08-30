@@ -13,24 +13,21 @@ serve(async (req) => {
   }
 
   try {
-    const { message, sessionId, baseUrl: bodyBaseUrl, flowId: bodyFlowId, apiKey: providedApiKey } = await req.json();
+    const { message, sessionId } = await req.json();
 
-    const envApiKey = Deno.env.get('LANGFLOW_API_KEY');
-    const langflowApiKey = providedApiKey || envApiKey;
+    // Use server-side secrets only
+    const langflowApiKey = Deno.env.get('LANGFLOW_API_KEY');
+    const baseUrl = (Deno.env.get('LANGFLOW_BASE_URL') || '').replace(/\/$/, '');
+    const flowId = Deno.env.get('LANGFLOW_FLOW_ID') || '';
+
     if (!langflowApiKey) {
-      throw new Error('Missing Langflow API key. Add LANGFLOW_API_KEY secret or provide apiKey in request body.');
+      throw new Error('Missing Langflow API key. Contact administrator to configure LANGFLOW_API_KEY secret.');
     }
-
-    const envBaseUrl = Deno.env.get('LANGFLOW_BASE_URL');
-    const envFlowId = Deno.env.get('LANGFLOW_FLOW_ID');
-    const baseUrl = (bodyBaseUrl || envBaseUrl || '').replace(/\/$/, '');
-    const flowId = bodyFlowId || envFlowId || '';
-
     if (!baseUrl) {
-      throw new Error('Missing Langflow baseUrl. Provide baseUrl in body or set LANGFLOW_BASE_URL secret.');
+      throw new Error('Missing Langflow base URL. Contact administrator to configure LANGFLOW_BASE_URL secret.');
     }
     if (!flowId) {
-      throw new Error('Missing Langflow flowId. Provide flowId in body or set LANGFLOW_FLOW_ID secret.');
+      throw new Error('Missing Langflow flow ID. Contact administrator to configure LANGFLOW_FLOW_ID secret.');
     }
 
     const payload = {
