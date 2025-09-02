@@ -334,6 +334,42 @@ export type Database = {
         }
         Relationships: []
       }
+      scraped_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          platform: string | null
+          scraped_at: string
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          platform?: string | null
+          scraped_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          platform?: string | null
+          scraped_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
