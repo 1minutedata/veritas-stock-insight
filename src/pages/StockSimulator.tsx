@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Activity, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "@gradio/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function StockSimulator() {
   const [accountData, setAccountData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState("");
   const [initialDeposit, setInitialDeposit] = useState("");
   const [stockSymbol, setStockSymbol] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -22,8 +23,11 @@ export default function StockSimulator() {
   const [portfolioValue, setPortfolioValue] = useState("");
   const [profitLoss, setProfitLoss] = useState("");
   const [transactions, setTransactions] = useState("");
+  const [priceHistory, setPriceHistory] = useState<Array<{time: string, price: number}>>([]);
+  const [trackingSymbol, setTrackingSymbol] = useState("AAPL");
   
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const connectToGradio = async () => {
     try {
@@ -40,10 +44,10 @@ export default function StockSimulator() {
   };
 
   const createAccount = async () => {
-    if (!userId || !initialDeposit) {
+    if (!user || !initialDeposit) {
       toast({
         title: "Missing Information",
-        description: "Please provide User ID and Initial Deposit",
+        description: "Please provide Initial Deposit",
         variant: "destructive",
       });
       return;
@@ -53,7 +57,7 @@ export default function StockSimulator() {
     try {
       const client = await connectToGradio();
       const result = await client.predict("/create_account", {
-        user_id: userId,
+        user_id: user.id,
         initial_deposit: initialDeposit,
       });
       
@@ -243,6 +247,53 @@ export default function StockSimulator() {
     }
   };
 
+  const trackStockPrice = async (symbol: string) => {
+    try {
+      const client = await connectToGradio();
+      const result = await client.predict("/get_stock_price", { symbol });
+      const priceData = result.data[0];
+      
+      // Extract numerical price from the response
+      const priceMatch = priceData.match(/\$?([\d,]+\.?\d*)/);
+      if (priceMatch) {
+        const price = parseFloat(priceMatch[1].replace(/,/g, ''));
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        
+        setPriceHistory(prev => {
+          const newHistory = [...prev, { time: timeString, price }];
+          // Keep only last 20 data points
+          return newHistory.slice(-20);
+        });
+      }
+    } catch (error) {
+      console.error("Error tracking stock price:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Initial price fetch
+    trackStockPrice(trackingSymbol);
+    
+    // Set up periodic tracking every 30 seconds
+    const interval = setInterval(() => {
+      trackStockPrice(trackingSymbol);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [trackingSymbol, user]);
+
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6 text-center">
+        <h1 className="text-2xl font-bold mb-4">Please log in to access the Stock Simulator</h1>
+        <p className="text-muted-foreground">You need to be authenticated to use trading features.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
@@ -255,12 +306,13 @@ export default function StockSimulator() {
       </div>
 
       <Tabs defaultValue="setup" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="trading">Trading</TabsTrigger>
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="chart">Price Chart</TabsTrigger>
         </TabsList>
 
         <TabsContent value="setup" className="space-y-6">
@@ -277,9 +329,9 @@ export default function StockSimulator() {
                   <Label htmlFor="userId">User ID</Label>
                   <Input
                     id="userId"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    placeholder="Enter your user ID"
+                    value={user.email || user.id}
+                    disabled
+                    placeholder="Logged in user"
                   />
                 </div>
                 <div>
@@ -507,6 +559,58 @@ export default function StockSimulator() {
               {transactions && (
                 <div className="p-4 bg-muted rounded-lg max-h-96 overflow-y-auto">
                   <pre className="text-sm whitespace-pre-wrap">{transactions}</pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chart" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Real-Time Stock Price Chart
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2 items-center">
+                <Label htmlFor="trackingSymbol">Track Symbol:</Label>
+                <Input
+                  id="trackingSymbol"
+                  value={trackingSymbol}
+                  onChange={(e) => setTrackingSymbol(e.target.value.toUpperCase())}
+                  placeholder="AAPL"
+                  className="w-32"
+                />
+                <Button onClick={() => trackStockPrice(trackingSymbol)} disabled={isLoading}>
+                  Update Now
+                </Button>
+              </div>
+              
+              <div className="h-96 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={priceHistory}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`$${value}`, 'Price']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="price" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {priceHistory.length > 0 && (
+                <div className="text-center">
+                  <Badge variant="outline" className="text-lg p-2">
+                    Latest {trackingSymbol}: ${priceHistory[priceHistory.length - 1]?.price?.toFixed(2)}
+                  </Badge>
                 </div>
               )}
             </CardContent>

@@ -17,9 +17,6 @@ const items = [
   { title: "Live Market Insights", url: "/market", icon: TrendingUp },
   { title: "Stock Simulator", url: "/stock-simulator", icon: BarChart3 },
   { title: "Manage Integrations", url: "/integrations", icon: Settings },
-  { title: "Payment Processing", url: "/payments", icon: CreditCard },
-  { title: "Linking Your Card", url: "/link-card", icon: LinkIcon },
-  { title: "Build Your Shop", url: "/shop", icon: Store },
 ];
 
 export function AppSidebar() {
