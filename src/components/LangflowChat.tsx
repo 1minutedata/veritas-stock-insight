@@ -97,7 +97,7 @@ const LangflowChat = () => {
       <div className="flex items-center justify-between gap-2 p-4 border-b">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h1 className="font-semibold text-lg">Veritasier — Your Assistant</h1>
+          <h1 className="font-semibold text-lg">LyticalPilot — Your Assistant</h1>
         </div>
         <Button variant="secondary" size="sm" onClick={() => setShowSettings((s) => !s)}>
           <Settings className="h-4 w-4 mr-2" /> Settings

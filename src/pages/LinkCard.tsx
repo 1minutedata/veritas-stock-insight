@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const LinkCard = () => {
   useEffect(() => {
-    document.title = "Veritasier - Linking Your Card";
+    document.title = "LyticalPilot - Linking Your Card";
   }, []);
 
   return (

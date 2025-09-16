@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { VeritasierLogo } from "@/components/VeritasierLogo";
+import { LyticalPilotLogo } from "@/components/LyticalPilotLogo";
 
 const items = [
   { title: "Your Assistant", url: "/", icon: Bot },
@@ -39,7 +39,7 @@ export function AppSidebar() {
           <div className="flex items-center justify-center">
             {!collapsed ? (
               <div className="bg-gradient-primary rounded-lg p-3">
-                <VeritasierLogo size="sm" />
+                <LyticalPilotLogo size="sm" />
               </div>
             ) : (
               <div className="bg-gradient-primary rounded-lg p-2 w-8 h-8 flex items-center justify-center">

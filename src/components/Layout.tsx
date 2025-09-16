@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { VeritasierLogo } from "@/components/VeritasierLogo";
+import { LyticalPilotLogo } from "@/components/LyticalPilotLogo";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
               <div className="bg-gradient-primary rounded-lg p-2">
-                <VeritasierLogo size="sm" />
+                <LyticalPilotLogo size="sm" />
               </div>
             </div>
           </header>

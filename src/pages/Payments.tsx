@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const Payments = () => {
   useEffect(() => {
-    document.title = "Veritasier - Payment Processing";
+    document.title = "LyticalPilot - Payment Processing";
   }, []);
 
   return (

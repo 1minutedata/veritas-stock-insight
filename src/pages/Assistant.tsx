@@ -3,7 +3,7 @@ import LangflowChat from "@/components/LangflowChat";
 
 const Assistant = () => {
   useEffect(() => {
-    document.title = "Veritasier - Your Assistant";
+    document.title = "LyticalPilot - Your Assistant";
   }, []);
 
   return (

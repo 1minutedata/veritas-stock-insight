@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 
-interface VeritasierLogoProps {
+interface LyticalPilotLogoProps {
   className?: string;
   size?: "sm" | "md" | "lg";
 }
 
-export function VeritasierLogo({ className, size = "md" }: VeritasierLogoProps) {
+export function LyticalPilotLogo({ className, size = "md" }: LyticalPilotLogoProps) {
   const sizeClasses = {
     sm: "text-lg",
     md: "text-2xl",
@@ -18,7 +18,7 @@ export function VeritasierLogo({ className, size = "md" }: VeritasierLogoProps) 
       sizeClasses[size],
       className
     )}>
-      VERITASIER
+      LyticalPilot
     </div>
   );
 }

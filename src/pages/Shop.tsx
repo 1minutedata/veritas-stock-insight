@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const Shop = () => {
   useEffect(() => {
-    document.title = "Veritasier - Build Your Shop";
+    document.title = "LyticalPilot - Build Your Shop";
   }, []);
 
   return (
