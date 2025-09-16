@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home } from "lucide-react";
+import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +15,7 @@ import { VeritasierLogo } from "@/components/VeritasierLogo";
 const items = [
   { title: "Your Assistant", url: "/", icon: Bot },
   { title: "Live Market Insights", url: "/market", icon: TrendingUp },
+  { title: "Stock Simulator", url: "/stock-simulator", icon: BarChart3 },
   { title: "Manage Integrations", url: "/integrations", icon: Settings },
   { title: "Payment Processing", url: "/payments", icon: CreditCard },
   { title: "Linking Your Card", url: "/link-card", icon: LinkIcon },

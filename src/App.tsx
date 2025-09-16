@@ -16,6 +16,7 @@ import Integrations from "./pages/Integrations";
 import Payments from "./pages/Payments";
 import LinkCard from "./pages/LinkCard";
 import Shop from "./pages/Shop";
+import StockSimulator from "./pages/StockSimulator";
 import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 
@@ -71,6 +72,13 @@ const App = () => (
             <Route path="/shop" element={
               <ProtectedRoute>
                 <Layout><Shop /></Layout>
+              </ProtectedRoute>
+            } />
+
+            {/* Stock Simulator */}
+            <Route path="/stock-simulator" element={
+              <ProtectedRoute>
+                <Layout><StockSimulator /></Layout>
               </ProtectedRoute>
             } />
 
