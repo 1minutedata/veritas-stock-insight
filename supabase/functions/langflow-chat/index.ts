@@ -52,6 +52,7 @@ serve(async (req) => {
 
     const response = await fetch(url, options);
 
+    if (!response.ok) {
       throw new Error(`Langflow API error: ${response.status} ${response.statusText}`);
     }
 
