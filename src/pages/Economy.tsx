@@ -151,7 +151,7 @@ const Economy = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 grid-pattern min-h-screen">
+      <div className="space-y-4">
         <div className="flex items-center gap-3">
           <PieChart className="h-8 w-8 text-primary" />
           <div>
