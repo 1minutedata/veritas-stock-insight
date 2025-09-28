@@ -36,13 +36,13 @@ export function LandingNavbar() {
           
           <div className="flex items-center gap-3">
             <Link to="/auth">
-              <Button variant="ghost" size="sm">
+              <Button variant="outline" size="sm" className="border-border hover:bg-muted/80 font-medium">
                 Log in
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
-                Request a demo
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md font-medium">
+                Start Your Free Trial
               </Button>
             </Link>
           </div>

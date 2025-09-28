@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function HeroSection() {
@@ -46,19 +46,11 @@ export function HeroSection() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link to="/auth">
-              <Button size="lg" className="px-8 py-4 text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                Request a demo
+              <Button size="lg" className="px-8 py-4 text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg font-semibold">
+                Start Your Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="px-8 py-4 text-base border-border hover:bg-muted/50"
-            >
-              <Play className="mr-2 h-5 w-5" />
-              Watch Demo
-            </Button>
           </div>
           
           {/* Hero Visual - Clean Blue Card */}
