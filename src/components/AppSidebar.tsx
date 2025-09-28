@@ -18,6 +18,7 @@ const items = [
   { title: "Stock Simulator", url: "/stock-simulator", icon: LineChart },
   { title: "Lytical Analyzer", url: "/lytical-analyzer", icon: BarChart3 },
   { title: "Financial Statements", url: "/financial-statements", icon: FileText },
+  { title: "Economy", url: "/economy", icon: TrendingUp },
   { title: "Manage Integrations", url: "/integrations", icon: Settings },
 ];
 

@@ -23,10 +23,20 @@ const LyticalAnalyzer = () => {
   const fetchTrades = async () => {
     setIsLoading(true);
     try {
+      // Convert dates to timestamp format
+      const fromTimestamp = new Date(dateRange.from).toISOString();
+      const toTimestamp = new Date(dateRange.to).toISOString();
+      
       const response = await fetch(
-        `https://api.polygon.io/v3/trades/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&limit=50&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/trades/${ticker}?timestamp.gte=${fromTimestamp}&timestamp.lt=${toTimestamp}&limit=50&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setTradesData(data);
       toast.success("Trades data fetched successfully");
     } catch (error) {
@@ -41,9 +51,15 @@ const LyticalAnalyzer = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/v2/last/trade/${ticker}?apiKey=${API_KEY}`
+        `https://api.polygon.io/v2/last/trade/${ticker}?apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setLastTradeData(data);
       toast.success("Last trade data fetched successfully");
     } catch (error) {
@@ -57,10 +73,20 @@ const LyticalAnalyzer = () => {
   const fetchQuotes = async () => {
     setIsLoading(true);
     try {
+      // Convert dates to timestamp format
+      const fromTimestamp = new Date(dateRange.from).toISOString();
+      const toTimestamp = new Date(dateRange.to).toISOString();
+      
       const response = await fetch(
-        `https://api.polygon.io/v3/quotes/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&limit=50&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/quotes/${ticker}?timestamp.gte=${fromTimestamp}&timestamp.lt=${toTimestamp}&limit=50&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setQuotesData(data);
       toast.success("Quotes data fetched successfully");
     } catch (error) {
@@ -75,9 +101,15 @@ const LyticalAnalyzer = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/v1/indicators/sma/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=20&series_type=close&limit=120&apiKey=${API_KEY}`
+        `https://api.polygon.io/v1/indicators/sma/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=20&series_type=close&limit=120&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setSmaData(data);
       toast.success("SMA data fetched successfully");
     } catch (error) {
@@ -92,9 +124,15 @@ const LyticalAnalyzer = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/v1/indicators/rsi/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=14&series_type=close&limit=120&apiKey=${API_KEY}`
+        `https://api.polygon.io/v1/indicators/rsi/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=14&series_type=close&limit=120&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setRsiData(data);
       toast.success("RSI data fetched successfully");
     } catch (error) {

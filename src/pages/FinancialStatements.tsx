@@ -21,9 +21,15 @@ const FinancialStatements = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/stocks/financials/v1/cash-flow-statements?ticker=${ticker}&limit=10&sort=period_end.desc&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&limit=10&sort=period_of_report_date.desc&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setCashFlowData(data);
       toast.success("Cash flow data fetched successfully");
     } catch (error) {
@@ -38,9 +44,15 @@ const FinancialStatements = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/stocks/financials/v1/income-statements?ticker=${ticker}&limit=10&sort=period_end.desc&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&limit=10&sort=period_of_report_date.desc&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setIncomeData(data);
       toast.success("Income statement data fetched successfully");
     } catch (error) {
@@ -55,9 +67,15 @@ const FinancialStatements = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/stocks/financials/v1/ratios?ticker=${ticker}&limit=10&sort=period_end.desc&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&limit=10&sort=period_of_report_date.desc&apikey=${API_KEY}`
       );
       const data = await response.json();
+      
+      if (data.status === "ERROR") {
+        toast.error(`API Error: ${data.error || 'Unknown error'}`);
+        return;
+      }
+      
       setRatiosData(data);
       toast.success("Financial ratios fetched successfully");
     } catch (error) {

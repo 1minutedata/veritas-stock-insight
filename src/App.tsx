@@ -19,6 +19,7 @@ import Shop from "./pages/Shop";
 import StockSimulator from "./pages/StockSimulator";
 import LyticalAnalyzer from "./pages/LyticalAnalyzer";
 import FinancialStatements from "./pages/FinancialStatements";
+import Economy from "./pages/Economy";
 import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 
@@ -95,6 +96,13 @@ const App = () => (
             <Route path="/financial-statements" element={
               <ProtectedRoute>
                 <Layout><FinancialStatements /></Layout>
+              </ProtectedRoute>
+            } />
+
+            {/* Economy */}
+            <Route path="/economy" element={
+              <ProtectedRoute>
+                <Layout><Economy /></Layout>
               </ProtectedRoute>
             } />
 
