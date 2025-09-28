@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Clean Background with Blue Accents */}
       <div className="absolute inset-0">
         <div className="absolute inset-0">
@@ -46,7 +46,7 @@ export function HeroSection() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link to="/auth">
-              <Button size="lg" className="px-8 py-4 text-base bg-primary hover:bg-primary/90 text-white shadow-lg">
+              <Button size="lg" className="px-8 py-4 text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
                 Request a demo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -64,7 +64,7 @@ export function HeroSection() {
           {/* Hero Visual - Clean Blue Card */}
           <div className="max-w-4xl mx-auto mt-16">
             <div className="bg-primary rounded-2xl p-8 md:p-12 shadow-xl">
-              <div className="bg-white rounded-xl p-6 md:p-8">
+              <div className="bg-card rounded-xl p-6 md:p-8 border border-border/20 shadow-lg">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-primary rounded-full"></div>
@@ -80,11 +80,11 @@ export function HeroSection() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <span className="text-muted-foreground">Portfolio Value</span>
-                    <span className="font-semibold text-bullish">+$127,420</span>
+                    <span className="font-semibold text-primary">+$127,420</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <span className="text-muted-foreground">AI Recommendations</span>
-                    <span className="bg-primary text-white px-3 py-1 rounded-md text-sm">Active</span>
+                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium">Active</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                     <span className="text-muted-foreground">Market Analysis</span>

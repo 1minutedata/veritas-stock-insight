@@ -5,7 +5,7 @@ import { LyticalPilotLogo } from "@/components/LyticalPilotLogo";
 
 export function LandingNavbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/20">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
@@ -41,7 +41,7 @@ export function LandingNavbar() {
               </Button>
             </Link>
             <Link to="/auth">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md">
                 Request a demo
               </Button>
             </Link>
