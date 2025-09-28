@@ -8,44 +8,40 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Clean Professional Theme Colors */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    /* Dark High-Tech Theme Colors */
+    --background: 210 12% 8%;
+    --foreground: 210 40% 95%;
+    --card: 210 12% 10%;
+    --card-foreground: 210 40% 95%;
+    --popover: 210 12% 10%;
+    --popover-foreground: 210 40% 95%;
     --primary: 142 76% 36%;
-    --primary-foreground: 0 0% 98%;
+    --primary-foreground: 210 12% 8%;
     --primary-glow: 142 76% 45%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
+    --secondary: 210 12% 16%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 210 12% 14%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 210 12% 8%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 210 12% 20%;
+    --input: 210 12% 16%;
     --ring: 142 76% 36%;
     --chart-1: 142 76% 36%;
     --chart-2: 173 58% 39%;
-    --chart-3: 217 91% 60%;
+    --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.75rem;
-    
-    /* Modern gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 4.8% 95.9%), hsl(0 0% 100%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(240 4.8% 95.9%));
     
     /* High-tech gradients */
     --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 45%));
     --gradient-dark: linear-gradient(135deg, hsl(210 12% 8%), hsl(210 12% 12%));
     --gradient-card: linear-gradient(135deg, hsl(210 12% 10%), hsl(210 12% 14%));
     --gradient-glow: linear-gradient(135deg, hsl(142 76% 36% / 0.2), hsl(142 76% 45% / 0.1));
+    
     
     /* Shadows with green glow */
     --shadow-glow: 0 0 40px hsl(142 76% 36% / 0.3);
@@ -63,10 +59,19 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 210 40% 90%;
     --sidebar-border: 210 12% 20%;
     --sidebar-ring: 142 76% 36%;
+
+    /* Landing page light theme overrides */
+    --landing-background: 0 0% 100%;
+    --landing-foreground: 240 10% 3.9%;
+    --landing-card: 0 0% 100%;
+    --landing-card-foreground: 240 10% 3.9%;
+    --landing-muted: 240 4.8% 95.9%;
+    --landing-muted-foreground: 240 3.8% 46.1%;
+    --landing-border: 240 5.9% 90%;
   }
 
   .dark {
-    /* Dark High-Tech Theme for App Pages */
+    /* Enhanced dark mode for high-tech feel */
     --background: 210 12% 6%;
     --foreground: 210 40% 98%;
     --card: 210 12% 8%;
@@ -88,10 +93,36 @@ All colors MUST be HSL.
     --input: 210 12% 12%;
     --ring: 142 76% 40%;
     
-    /* Enhanced gradients for dark mode */
+    /* Enhanced gradients */
     --gradient-primary: linear-gradient(135deg, hsl(142 76% 40%), hsl(142 76% 50%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 12% 6%), hsl(210 12% 10%));
-    --gradient-card: linear-gradient(135deg, hsl(210 12% 8%), hsl(210 12% 12%));
+    --gradient-dark: linear-gradient(135deg, hsl(210 12% 6%), hsl(210 12% 10%));
+    --gradient-glow: linear-gradient(135deg, hsl(142 76% 40% / 0.3), hsl(142 76% 50% / 0.2));
+    
+    /* Enhanced shadows */
+    --shadow-glow: 0 0 50px hsl(142 76% 40% / 0.4);
+    --shadow-card: 0 4px 25px hsl(210 12% 6% / 0.6);
+    --shadow-intense: 0 8px 50px hsl(142 76% 40% / 0.5);
+
+    --sidebar-background: 210 12% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 142 76% 40%;
+    --sidebar-primary-foreground: 210 12% 6%;
+    --sidebar-accent: 210 12% 12%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 210 12% 16%;
+    --sidebar-ring: 142 76% 40%;
+  }
+
+  /* Light theme for landing page specifically */
+  .landing-page {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --border: 240 5.9% 90%;
+    --primary-foreground: 0 0% 98%;
   }
 }
 
@@ -101,10 +132,11 @@ All colors MUST be HSL.
   }
 
   body {
-    background: hsl(var(--background));
+    background: var(--gradient-dark);
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
+    background-attachment: fixed;
   }
 
   /* High-tech UI enhancements */

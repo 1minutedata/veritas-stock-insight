@@ -7,7 +7,7 @@ import { ScrollAnimatedSection } from "@/components/ScrollAnimatedSection";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden landing-page">
       <LandingNavbar />
       <HeroSection />
       
