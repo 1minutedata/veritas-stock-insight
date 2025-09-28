@@ -1,6 +1,7 @@
 import { LandingNavbar } from "@/components/LandingNavbar";
 import { HeroSection } from "@/components/HeroSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
+import { FounderSection } from "@/components/FounderSection";
 import { PricingSection } from "@/components/PricingSection";
 import { ScrollAnimatedSection } from "@/components/ScrollAnimatedSection";
 
@@ -12,6 +13,10 @@ const Landing = () => {
       
       <ScrollAnimatedSection animation="fade-up" delay={200}>
         <FeaturesSection />
+      </ScrollAnimatedSection>
+      
+      <ScrollAnimatedSection animation="fade-up" delay={250}>
+        <FounderSection />
       </ScrollAnimatedSection>
       
       <ScrollAnimatedSection animation="fade-up" delay={300}>

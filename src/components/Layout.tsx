@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { LyticalPilotLogo } from "@/components/LyticalPilotLogo";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -9,13 +8,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center justify-between border-b border-border/50 px-4 bg-card/50 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              <div className="bg-gradient-primary rounded-lg p-2">
-                <LyticalPilotLogo size="sm" />
-              </div>
-            </div>
+          <header className="h-14 flex items-center border-b border-border/50 px-4 bg-card/50 backdrop-blur-sm">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
           </header>
           <main className="flex-1 p-6 overflow-auto">{children}</main>
         </div>
