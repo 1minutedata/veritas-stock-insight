@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home, BarChart3, LineChart } from "lucide-react";
+import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home, BarChart3, LineChart, FileText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ const items = [
   { title: "Live Market Insights", url: "/", icon: TrendingUp },
   { title: "Stock Simulator", url: "/stock-simulator", icon: LineChart },
   { title: "Lytical Analyzer", url: "/lytical-analyzer", icon: BarChart3 },
+  { title: "Financial Statements", url: "/financial-statements", icon: FileText },
   { title: "Manage Integrations", url: "/integrations", icon: Settings },
 ];
 

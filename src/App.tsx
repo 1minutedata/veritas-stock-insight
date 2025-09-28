@@ -18,6 +18,7 @@ import LinkCard from "./pages/LinkCard";
 import Shop from "./pages/Shop";
 import StockSimulator from "./pages/StockSimulator";
 import LyticalAnalyzer from "./pages/LyticalAnalyzer";
+import FinancialStatements from "./pages/FinancialStatements";
 import NotFound from "./pages/NotFound";
 import ChatWidget from "./components/ChatWidget";
 
@@ -87,6 +88,13 @@ const App = () => (
             <Route path="/lytical-analyzer" element={
               <ProtectedRoute>
                 <Layout><LyticalAnalyzer /></Layout>
+              </ProtectedRoute>
+            } />
+
+            {/* Financial Statements */}
+            <Route path="/financial-statements" element={
+              <ProtectedRoute>
+                <Layout><FinancialStatements /></Layout>
               </ProtectedRoute>
             } />
 

@@ -4,361 +4,458 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
+import { Loader2, TrendingUp, Activity, BarChart3, AlertCircle, Target } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 
 const LyticalAnalyzer = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [inflationData, setInflationData] = useState<any>(null);
-  const [inflationExpectations, setInflationExpectations] = useState<any>(null);
-  const [optionsData, setOptionsData] = useState<any>(null);
-  const [dailyData, setDailyData] = useState<any>(null);
-  const [optionsTicker, setOptionsTicker] = useState("O:SPY251219C00650000");
-  const [dateRange, setDateRange] = useState({ from: "2023-01-09", to: "2023-02-10" });
+  const [tradesData, setTradesData] = useState<any>(null);
+  const [lastTradeData, setLastTradeData] = useState<any>(null);
+  const [quotesData, setQuotesData] = useState<any>(null);
+  const [smaData, setSmaData] = useState<any>(null);
+  const [rsiData, setRsiData] = useState<any>(null);
+  const [ticker, setTicker] = useState("AAPL");
+  const [dateRange, setDateRange] = useState({ from: "2024-01-01", to: "2024-01-02" });
 
   const API_KEY = "bPZA8eqxhGpk2xoKB2RPj8FIY7giprqD";
 
-  const fetchInflationData = async () => {
+  const fetchTrades = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/fed/v1/inflation?limit=100&sort=date.asc&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/trades/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&limit=50&apiKey=${API_KEY}`
       );
       const data = await response.json();
-      setInflationData(data);
-      toast.success("Inflation data fetched successfully");
+      setTradesData(data);
+      toast.success("Trades data fetched successfully");
     } catch (error) {
-      toast.error("Failed to fetch inflation data");
+      toast.error("Failed to fetch trades data");
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchInflationExpectations = async () => {
+  const fetchLastTrade = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/fed/v1/inflation-expectations?limit=100&sort=date.asc&apiKey=${API_KEY}`
+        `https://api.polygon.io/v2/last/trade/${ticker}?apiKey=${API_KEY}`
       );
       const data = await response.json();
-      setInflationExpectations(data);
-      toast.success("Inflation expectations fetched successfully");
+      setLastTradeData(data);
+      toast.success("Last trade data fetched successfully");
     } catch (error) {
-      toast.error("Failed to fetch inflation expectations");
+      toast.error("Failed to fetch last trade data");
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchOptionsAggregates = async () => {
+  const fetchQuotes = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/v2/aggs/ticker/${optionsTicker}/range/1/day/${dateRange.from}/${dateRange.to}?adjusted=true&sort=asc&limit=120&apiKey=${API_KEY}`
+        `https://api.polygon.io/v3/quotes/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&limit=50&apiKey=${API_KEY}`
       );
       const data = await response.json();
-      setOptionsData(data);
-      toast.success("Options aggregates fetched successfully");
+      setQuotesData(data);
+      toast.success("Quotes data fetched successfully");
     } catch (error) {
-      toast.error("Failed to fetch options aggregates");
+      toast.error("Failed to fetch quotes data");
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchDailyTickerSummary = async () => {
+  const fetchSMA = async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api.polygon.io/v1/open-close/${optionsTicker}/${dateRange.from}?adjusted=true&apiKey=${API_KEY}`
+        `https://api.polygon.io/v1/indicators/sma/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=20&series_type=close&limit=120&apiKey=${API_KEY}`
       );
       const data = await response.json();
-      setDailyData(data);
-      toast.success("Daily ticker summary fetched successfully");
+      setSmaData(data);
+      toast.success("SMA data fetched successfully");
     } catch (error) {
-      toast.error("Failed to fetch daily ticker summary");
+      toast.error("Failed to fetch SMA data");
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchRSI = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `https://api.polygon.io/v1/indicators/rsi/${ticker}?timestamp.gte=${dateRange.from}&timestamp.lt=${dateRange.to}&timespan=day&adjusted=true&window=14&series_type=close&limit=120&apiKey=${API_KEY}`
+      );
+      const data = await response.json();
+      setRsiData(data);
+      toast.success("RSI data fetched successfully");
+    } catch (error) {
+      toast.error("Failed to fetch RSI data");
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4
+    }).format(price);
+  };
+
+  const formatTimestamp = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString();
   };
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 grid-pattern min-h-screen">
         <div className="flex items-center gap-3">
           <BarChart3 className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Lytical Analyzer</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              Lytical Analyzer
+            </h1>
             <p className="text-muted-foreground">Advanced financial data analysis using Polygon API</p>
           </div>
         </div>
 
-        <Tabs defaultValue="inflation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="inflation">Inflation</TabsTrigger>
-            <TabsTrigger value="expectations">Expectations</TabsTrigger>
-            <TabsTrigger value="options">Options OHLC</TabsTrigger>
-            <TabsTrigger value="daily">Daily Summary</TabsTrigger>
+        <Card className="border-glow bg-gradient-card">
+          <CardHeader>
+            <CardTitle>Stock Analysis Configuration</CardTitle>
+            <CardDescription>Configure ticker and date range for analysis</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Stock Ticker</label>
+                <Input
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  placeholder="AAPL"
+                  className="input-tech"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">From Date</label>
+                <Input
+                  type="date"
+                  value={dateRange.from}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                  className="input-tech"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">To Date</label>
+                <Input
+                  type="date"
+                  value={dateRange.to}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                  className="input-tech"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue="trades" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5 bg-secondary/50">
+            <TabsTrigger value="trades" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Trades</TabsTrigger>
+            <TabsTrigger value="lasttrade" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Last Trade</TabsTrigger>
+            <TabsTrigger value="quotes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Quotes</TabsTrigger>
+            <TabsTrigger value="sma" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">SMA</TabsTrigger>
+            <TabsTrigger value="rsi" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">RSI</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="inflation" className="space-y-4">
-            <Card>
+          <TabsContent value="trades" className="space-y-4">
+            <Card className="border-glow bg-gradient-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Inflation Data
+                  <Activity className="h-5 w-5 text-primary" />
+                  Stock Trades
                 </CardTitle>
                 <CardDescription>
-                  Retrieve key indicators of realized inflation, reflecting actual changes in consumer prices 
-                  and spending behavior in the U.S. economy.
+                  Real-time trade data showing executed transactions with price, size, and timestamps
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button onClick={fetchInflationData} disabled={isLoading}>
+                <Button 
+                  onClick={fetchTrades} 
+                  disabled={isLoading}
+                  className="bg-gradient-primary hover:shadow-intense"
+                >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Fetch Inflation Data
+                  Fetch Trades Data
                 </Button>
                 
-                {inflationData && (
-                  <div className="space-y-2">
-                    <Badge variant="secondary">
-                      Status: {inflationData.status}
-                    </Badge>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {inflationData.results?.slice(0, 6).map((item: any, index: number) => (
-                        <Card key={index} className="p-4">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{item.date}</span>
-                            <span className="text-primary font-bold">{item.value}%</span>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="expectations" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5" />
-                  Inflation Expectations
-                </CardTitle>
-                <CardDescription>
-                  Broad view of how inflation is expected to evolve over time in the U.S. economy, 
-                  combining signals from financial markets and economic models.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button onClick={fetchInflationExpectations} disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Fetch Inflation Expectations
-                </Button>
-                
-                {inflationExpectations && (
-                  <div className="space-y-2">
-                    <Badge variant="secondary">
-                      Status: {inflationExpectations.status}
-                    </Badge>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {inflationExpectations.results?.slice(0, 6).map((item: any, index: number) => (
-                        <Card key={index} className="p-4">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{item.date}</span>
-                            <span className="text-primary font-bold">{item.value}%</span>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="options" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Custom Bars (OHLC)
-                </CardTitle>
-                <CardDescription>
-                  Retrieve aggregated historical OHLC data for specified options contracts 
-                  over custom date ranges and time intervals.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Options Ticker</label>
-                    <Input
-                      value={optionsTicker}
-                      onChange={(e) => setOptionsTicker(e.target.value)}
-                      placeholder="O:SPY251219C00650000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">From Date</label>
-                    <Input
-                      type="date"
-                      value={dateRange.from}
-                      onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">To Date</label>
-                    <Input
-                      type="date"
-                      value={dateRange.to}
-                      onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                
-                <Button onClick={fetchOptionsAggregates} disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Fetch Options Data
-                </Button>
-                
-                {optionsData && (
-                  <div className="space-y-2">
-                    <Badge variant="secondary">
-                      Status: {optionsData.status} | Results: {optionsData.resultsCount}
-                    </Badge>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {optionsData.results?.slice(0, 9).map((item: any, index: number) => (
-                        <Card key={index} className="p-4">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Date</span>
-                              <span className="text-sm">{new Date(item.t).toLocaleDateString()}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div>Open: <span className="font-medium">${item.o}</span></div>
-                              <div>High: <span className="font-medium text-green-600">${item.h}</span></div>
-                              <div>Low: <span className="font-medium text-red-600">${item.l}</span></div>
-                              <div>Close: <span className="font-medium">${item.c}</span></div>
-                            </div>
-                            <div className="text-sm">
-                              Volume: <span className="font-medium">{item.v?.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="daily" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Daily Ticker Summary (OHLC)
-                </CardTitle>
-                <CardDescription>
-                  Retrieve opening and closing prices for specific options contracts on given dates, 
-                  including pre-market and after-hours trade prices.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Options Ticker</label>
-                    <Input
-                      value={optionsTicker}
-                      onChange={(e) => setOptionsTicker(e.target.value)}
-                      placeholder="O:SPY251219C00650000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Date</label>
-                    <Input
-                      type="date"
-                      value={dateRange.from}
-                      onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                
-                <Button onClick={fetchDailyTickerSummary} disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Fetch Daily Summary
-                </Button>
-                
-                {dailyData && (
+                {tradesData && (
                   <div className="space-y-4">
-                    <Badge variant="secondary">
-                      Status: {dailyData.status}
+                    <Badge variant="secondary" className="bg-primary/20 text-primary">
+                      Status: {tradesData.status} | Results: {tradesData.results?.length || 0}
                     </Badge>
-                    {dailyData.status === "OK" && (
-                      <Card className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <h3 className="font-semibold text-lg">Trading Data</h3>
-                            <div className="space-y-2">
-                              <div className="flex justify-between">
-                                <span>Symbol:</span>
-                                <span className="font-medium">{dailyData.symbol}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Date:</span>
-                                <span className="font-medium">{dailyData.from}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Open:</span>
-                                <span className="font-medium">${dailyData.open}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Close:</span>
-                                <span className="font-medium">${dailyData.close}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>High:</span>
-                                <span className="font-medium text-green-600">${dailyData.high}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>Low:</span>
-                                <span className="font-medium text-red-600">${dailyData.low}</span>
-                              </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                      {tradesData.results?.slice(0, 12).map((trade: any, index: number) => (
+                        <Card key={index} className="border-glow bg-card/50 backdrop-blur">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Price</span>
+                              <span className="font-bold text-primary text-lg">
+                                {formatPrice(trade.price)}
+                              </span>
                             </div>
-                          </div>
-                          <div className="space-y-3">
-                            <h3 className="font-semibold text-lg">Volume & Additional</h3>
-                            <div className="space-y-2">
-                              <div className="flex justify-between">
-                                <span>Volume:</span>
-                                <span className="font-medium">{dailyData.volume?.toLocaleString()}</span>
-                              </div>
-                              {dailyData.preMarket && (
-                                <div className="flex justify-between">
-                                  <span>Pre-Market:</span>
-                                  <span className="font-medium">${dailyData.preMarket}</span>
-                                </div>
-                              )}
-                              {dailyData.afterHours && (
-                                <div className="flex justify-between">
-                                  <span>After Hours:</span>
-                                  <span className="font-medium">${dailyData.afterHours}</span>
-                                </div>
-                              )}
+                            <div className="flex justify-between">
+                              <span className="text-sm">Size:</span>
+                              <span className="font-medium">{trade.size?.toLocaleString()}</span>
                             </div>
-                          </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm">Exchange:</span>
+                              <span className="font-medium">{trade.exchange}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
+                              {formatTimestamp(trade.participant_timestamp)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="lasttrade" className="space-y-4">
+            <Card className="border-glow bg-gradient-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Last Trade
+                </CardTitle>
+                <CardDescription>
+                  Most recent trade information for the specified stock
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={fetchLastTrade} 
+                  disabled={isLoading}
+                  className="bg-gradient-primary hover:shadow-intense"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Fetch Last Trade
+                </Button>
+                
+                {lastTradeData && lastTradeData.status === "OK" && (
+                  <Card className="border-glow bg-card/50 backdrop-blur max-w-md">
+                    <CardHeader>
+                      <CardTitle className="text-xl">{ticker} - Last Trade</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Price:</span>
+                          <span className="font-bold text-primary text-2xl">
+                            {formatPrice(lastTradeData.results?.price)}
+                          </span>
                         </div>
-                      </Card>
-                    )}
+                        <div className="flex justify-between">
+                          <span className="text-sm">Size:</span>
+                          <span className="font-medium">
+                            {lastTradeData.results?.size?.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Exchange:</span>
+                          <span className="font-medium">
+                            {lastTradeData.results?.exchange}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
+                          {formatTimestamp(lastTradeData.results?.timestamp)}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="quotes" className="space-y-4">
+            <Card className="border-glow bg-gradient-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Stock Quotes (Bid/Ask)
+                </CardTitle>
+                <CardDescription>
+                  Real-time bid and ask quotes showing market depth and spread
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={fetchQuotes} 
+                  disabled={isLoading}
+                  className="bg-gradient-primary hover:shadow-intense"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Fetch Quotes Data
+                </Button>
+                
+                {quotesData && (
+                  <div className="space-y-4">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary">
+                      Status: {quotesData.status} | Results: {quotesData.results?.length || 0}
+                    </Badge>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                      {quotesData.results?.slice(0, 12).map((quote: any, index: number) => (
+                        <Card key={index} className="border-glow bg-card/50 backdrop-blur">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">BID</span>
+                                <div className="text-green-400 font-bold">
+                                  {formatPrice(quote.bid)}
+                                </div>
+                                <div className="text-xs">Size: {quote.bid_size}</div>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">ASK</span>
+                                <div className="text-red-400 font-bold">
+                                  {formatPrice(quote.ask)}
+                                </div>
+                                <div className="text-xs">Size: {quote.ask_size}</div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between pt-2 border-t border-border/50">
+                              <span className="text-xs">Spread:</span>
+                              <span className="text-xs font-medium text-primary">
+                                {formatPrice(quote.ask - quote.bid)}
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatTimestamp(quote.participant_timestamp)}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sma" className="space-y-4">
+            <Card className="border-glow bg-gradient-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Simple Moving Average (SMA)
+                </CardTitle>
+                <CardDescription>
+                  20-period simple moving average for trend analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={fetchSMA} 
+                  disabled={isLoading}
+                  className="bg-gradient-primary hover:shadow-intense"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Fetch SMA Data
+                </Button>
+                
+                {smaData && (
+                  <div className="space-y-4">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary">
+                      Status: {smaData.status} | Results: {smaData.results?.values?.length || 0}
+                    </Badge>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {smaData.results?.values?.slice(0, 8).map((sma: any, index: number) => (
+                        <Card key={index} className="border-glow bg-card/50 backdrop-blur">
+                          <CardContent className="p-4 text-center space-y-2">
+                            <div className="text-2xl font-bold text-primary">
+                              {formatPrice(sma.value)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(sma.timestamp).toLocaleDateString()}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rsi" className="space-y-4">
+            <Card className="border-glow bg-gradient-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-primary" />
+                  Relative Strength Index (RSI)
+                </CardTitle>
+                <CardDescription>
+                  14-period RSI indicator for momentum analysis (0-100 scale)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  onClick={fetchRSI} 
+                  disabled={isLoading}
+                  className="bg-gradient-primary hover:shadow-intense"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Fetch RSI Data
+                </Button>
+                
+                {rsiData && (
+                  <div className="space-y-4">
+                    <Badge variant="secondary" className="bg-primary/20 text-primary">
+                      Status: {rsiData.status} | Results: {rsiData.results?.values?.length || 0}
+                    </Badge>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {rsiData.results?.values?.slice(0, 8).map((rsi: any, index: number) => (
+                        <Card key={index} className="border-glow bg-card/50 backdrop-blur">
+                          <CardContent className="p-4 text-center space-y-2">
+                            <div className={`text-2xl font-bold ${
+                              rsi.value > 70 ? 'text-red-400' : 
+                              rsi.value < 30 ? 'text-green-400' : 
+                              'text-primary'
+                            }`}>
+                              {rsi.value?.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(rsi.timestamp).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs">
+                              {rsi.value > 70 ? 'Overbought' : 
+                               rsi.value < 30 ? 'Oversold' : 
+                               'Neutral'}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
