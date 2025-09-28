@@ -19,7 +19,7 @@ const Success = () => {
         
         if (data.subscribed) {
           toast({
-            title: "Welcome to VeritasPilot Premium!",
+            title: "Welcome to LyticalPilot Premium!",
             description: `Your ${data.subscription_tier} subscription is now active.`,
           });
         }
@@ -42,7 +42,7 @@ const Success = () => {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                VeritasPilot
+                LyticalPilot
               </h1>
               <p className="text-muted-foreground text-sm">AI-Powered Stock Analysis</p>
             </div>
@@ -56,7 +56,7 @@ const Success = () => {
               <CheckCircle className="h-12 w-12 text-bullish" />
             </div>
             <CardTitle className="text-2xl font-bold">
-              🎉 Welcome to VeritasPilot Premium!
+              🎉 Welcome to LyticalPilot Premium!
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">

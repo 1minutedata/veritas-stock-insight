@@ -142,7 +142,7 @@ const Auth = () => {
       if (data.user) {
         toast({
           title: "Account created successfully!",
-          description: "You can now access VeritasPilot Premium features.",
+          description: "You can now access LyticalPilot Premium features.",
         });
         navigate("/");
       }
@@ -168,7 +168,7 @@ const Auth = () => {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                VeritasPilot
+                LyticalPilot
               </h1>
               <p className="text-muted-foreground text-sm">AI-Powered Stock Analysis</p>
             </div>
@@ -193,8 +193,8 @@ const Auth = () => {
             </CardTitle>
             <CardDescription>
               {isLogin 
-                ? "Sign in to access your VeritasPilot dashboard" 
-                : "Join VeritasPilot and start your free trial"
+                ? "Sign in to access your LyticalPilot dashboard" 
+                : "Join LyticalPilot and start your free trial"
               }
             </CardDescription>
           </CardHeader>

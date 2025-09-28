@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home, BarChart3 } from "lucide-react";
+import { Bot, TrendingUp, Settings, CreditCard, Link as LinkIcon, Store, Home, BarChart3, LineChart } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,9 +13,10 @@ import {
 import { LyticalPilotLogo } from "@/components/LyticalPilotLogo";
 
 const items = [
-  { title: "Your Assistant", url: "/", icon: Bot },
-  { title: "Live Market Insights", url: "/market", icon: TrendingUp },
-  { title: "Stock Simulator", url: "/stock-simulator", icon: BarChart3 },
+  { title: "Your Assistant", url: "/assistant", icon: Bot },
+  { title: "Live Market Insights", url: "/", icon: TrendingUp },
+  { title: "Stock Simulator", url: "/stock-simulator", icon: LineChart },
+  { title: "Lytical Analyzer", url: "/lytical-analyzer", icon: BarChart3 },
   { title: "Manage Integrations", url: "/integrations", icon: Settings },
 ];
 

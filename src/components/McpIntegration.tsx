@@ -116,7 +116,7 @@ const McpIntegration = ({ connectedUser }: McpIntegrationProps) => {
             <p className="text-sm font-medium">MCP Config ID</p>
             <p className="text-xs text-muted-foreground font-mono">{MCP_CONFIG_ID}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Developer-configured MCP server for VeritasPilot integration
+              Developer-configured MCP server for LyticalPilot integration
             </p>
           </div>
 

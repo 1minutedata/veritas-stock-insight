@@ -36,7 +36,7 @@ VeritasPilot AI
 `;
       setEmailContent(content);
     } else {
-      setEmailContent("Subject: Stock Market Update from VeritasPilot\n\nYour personalized stock analysis report...");
+      setEmailContent("Subject: Stock Market Update from LyticalPilot\n\nYour personalized stock analysis report...");
     }
   };
 
@@ -56,7 +56,7 @@ VeritasPilot AI
       // Extract subject and body from email content
       const lines = emailContent.split('\n');
       const subjectLine = lines.find(line => line.startsWith('Subject:'));
-      const subject = subjectLine ? subjectLine.replace('Subject:', '').trim() : 'Stock Analysis from VeritasPilot';
+      const subject = subjectLine ? subjectLine.replace('Subject:', '').trim() : 'Stock Analysis from LyticalPilot';
       const body = emailContent.replace(subjectLine || '', '').trim();
 
       const { data, error } = await supabase.functions.invoke('composio-auth', {

@@ -17,7 +17,7 @@ export function parseCommand(input: string): ParsedCommand {
     // Subject and body heuristics
     const subjectMatch = text.match(/subject\s*:\s*([^]+?)(?=body\s*:|$)/i);
     const bodyMatch = text.match(/body\s*:\s*([^]+)$/i);
-    const subject = subjectMatch ? subjectMatch[1].trim() : 'Stock Analysis from VeritasPilot';
+    const subject = subjectMatch ? subjectMatch[1].trim() : 'Stock Analysis from LyticalPilot';
     const body = bodyMatch ? bodyMatch[1].trim() : text.replace(/.*?(gmail|email)\b/i, '').trim();
     if (to) {
       return { kind: 'gmail', to, subject, body };
@@ -30,7 +30,7 @@ export function parseCommand(input: string): ParsedCommand {
     const channel = channelMatch ? channelMatch[1] : '';
     // Prefer "message:" or the rest of text after "slack"
     const msgMatch = text.match(/message\s*:\s*([^]+)$/i);
-    const msg = msgMatch ? msgMatch[1].trim() : text.replace(/.*?slack\b/i, '').trim() || 'Automated update from VeritasPilot';
+    const msg = msgMatch ? msgMatch[1].trim() : text.replace(/.*?slack\b/i, '').trim() || 'Automated update from LyticalPilot';
     if (channel) {
       return { kind: 'slack', channel, text: msg };
     }
@@ -41,7 +41,7 @@ export function parseCommand(input: string): ParsedCommand {
     const amountMatch = text.match(/amount\s*[:=]?\s*\$?(-?\d+(\.\d+)?)/i);
     const memoMatch = text.match(/memo\s*:\s*([^]+)$/i);
     const amount = amountMatch ? parseFloat(amountMatch[1]) : NaN;
-    const memo = memoMatch ? memoMatch[1].trim() : 'Automated entry from VeritasPilot';
+    const memo = memoMatch ? memoMatch[1].trim() : 'Automated entry from LyticalPilot';
     if (!Number.isNaN(amount)) {
       return { kind: 'quickbooks', amount, memo };
     }

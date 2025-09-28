@@ -27,7 +27,7 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
   const generateContent = (type: 'email' | 'slack' | 'quickbooks') => {
     if (!stockSymbol || !analysis) return;
 
-    const baseContent = `VeritasPilot Analysis for ${stockSymbol}:\n\n${analysis}`;
+    const baseContent = `LyticalPilot Analysis for ${stockSymbol}:\n\n${analysis}`;
     
     switch (type) {
       case 'email':
@@ -35,7 +35,7 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
           ...prev,
           gmail: {
             ...prev.gmail,
-            content: `Subject: Stock Analysis - ${stockSymbol}\n\nDear Investor,\n\n${baseContent}\n\nBest regards,\nVeritasPilot AI`
+            content: `Subject: Stock Analysis - ${stockSymbol}\n\nDear Investor,\n\n${baseContent}\n\nBest regards,\nLyticalPilot AI`
           }
         }));
         break;
@@ -220,7 +220,7 @@ export const IntegrationActions = ({ connectedIntegrations, stockSymbol, analysi
                   onClick={() => {
                     const lines = actionData.gmail.content.split('\n');
                     const subjectLine = lines.find(line => line.startsWith('Subject:'));
-                    const subject = subjectLine ? subjectLine.replace('Subject:', '').trim() : 'Stock Analysis from VeritasPilot';
+                    const subject = subjectLine ? subjectLine.replace('Subject:', '').trim() : 'Stock Analysis from LyticalPilot';
                     const body = actionData.gmail.content.replace(subjectLine || '', '').trim();
                     
                     executeAction('gmail', 'GMAIL_SEND_EMAIL', {

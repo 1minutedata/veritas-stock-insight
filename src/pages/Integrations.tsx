@@ -30,7 +30,7 @@ const Integrations = () => {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                   Integrations
                 </h1>
-                <p className="text-muted-foreground">Connect external services to enhance VeritasPilot</p>
+                <p className="text-muted-foreground">Connect external services to enhance LyticalPilot</p>
               </div>
             </div>
             
